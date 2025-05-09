@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 enum Modes { MAIN_MENU, SETTINGS, PAUSE, GAME };
 
@@ -16,8 +17,12 @@ struct Settings {
   int position_step_y;
   enum Modes mode;
   float background_scrool_speed;
-};
-struct Settings settings;
+} settings;
+
+struct PlayerSettings {
+  Rectangle position;
+  int health;
+} player;
 
 struct MainMenuButton {
   char *text;
@@ -66,6 +71,24 @@ void process_key_main_menu(int key, struct Settings *settings) {
   };
 };
 
+void process_key_main_game(int key, struct PlayerSettings *player, int width) {
+  switch (key) {
+  case KEY_LEFT:
+    if (player->position.x < 0)
+      player->position.x = width;
+    player->position.x -= 3;
+    break;
+  case KEY_RIGHT:
+    if (player->position.x > width)
+      player->position.x = 0;
+    player->position.x += 3;
+
+    break;
+  default:
+    break;
+  };
+};
+
 char buttons_text[3][10] = {"Start", "Settings", "Exit"};
 struct MainMenuButton buttons[3];
 
@@ -96,8 +119,19 @@ int main(void) {
       LoadTexture("./assets/Red_Background_Version2_Layer3.png");
   Texture2D background_layer_4 =
       LoadTexture("./assets/Red_Background_Version2_Layer4.png");
-
+  Texture2D spaceship_full_health =
+      LoadTexture("./assets/Foozle_2DS0011_Void_MainShip/Main Ship/Main Ship - "
+                  "Bases/PNGs/Main Ship - Base - Full health.png");
+  Vector2 origin = {spaceship_full_health.width / 2.0f,
+                    spaceship_full_health.height / 2.0f};
+  Rectangle sourceRec = {0, 0, spaceship_full_health.width,
+                         spaceship_full_health.height};
   // Calculate position and focus for menu buttons for different screen sizes
+  player.position.x = (float)settings.screen_width / 2;
+  player.position.y = 700;
+  player.position.width = spaceship_full_health.width;
+  player.position.height = spaceship_full_health.height;
+  player.health = 100;
   for (int i = 0; i < settings.buttons_count; i++) {
     buttons[i].text = buttons_text[i];
     buttons[i].x_pos = get_text_position_x(settings.screen_width,
@@ -159,9 +193,21 @@ int main(void) {
 
     // ACTUAL GAME
     if (settings.mode == GAME) {
-      DrawText("Game Mode", 20, 20, 40, RAYWHITE);
+      DrawText("Press Backspace to Leave", 20, 20, 10, RAYWHITE);
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MAIN_MENU;
+      };
+      DrawText(
+          TextFormat("X = %f, Y = %f", player.position.x, player.position.y),
+          settings.screen_width - 300, 20, 15, RAYWHITE);
+      DrawTexturePro(spaceship_full_health, sourceRec, player.position, origin,
+                     0.0f, WHITE);
+      DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
+      if (IsKeyDown(KEY_LEFT)) {
+        process_key_main_game(KEY_LEFT, &player, settings.screen_width);
+      };
+      if (IsKeyDown(KEY_RIGHT)) {
+        process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
       };
     };
     // END OF ACTUAL GAME
@@ -171,6 +217,7 @@ int main(void) {
   UnloadTexture(background_layer_2);
   UnloadTexture(background_layer_3);
   UnloadTexture(background_layer_4);
+  UnloadTexture(spaceship_full_health);
   CloseWindow();
   return 0;
 }
