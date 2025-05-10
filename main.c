@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-enum Modes { MAIN_MENU, SETTINGS, PAUSE, GAME };
+enum Modes { MAIN_MENU, SETTINGS, GAME };
 
 struct Settings {
   int screen_width;
@@ -17,6 +17,7 @@ struct Settings {
   int position_step_y;
   enum Modes mode;
   float background_scrool_speed;
+  bool is_paused;
 } settings;
 
 struct PlayerSettings {
@@ -29,6 +30,11 @@ struct MainMenuButton {
   int x_pos;
   int y_pos;
   bool is_focused;
+};
+
+struct Background {
+  char *path;
+  Texture2D texture;
 };
 
 int get_text_position_x(int screen_width, char text[], int font_size) {
@@ -92,6 +98,12 @@ void process_key_main_game(int key, struct PlayerSettings *player, int width) {
 char buttons_text[3][10] = {"Start", "Settings", "Exit"};
 struct MainMenuButton buttons[3];
 
+struct Background backgrounds[4] = {
+    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer1.png"},
+    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer2.png"},
+    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer3.png"},
+    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer4.png"}};
+
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
@@ -107,21 +119,21 @@ int main(void) {
   settings.should_close = false;
   settings.position_step_y = settings.screen_height / 16;
   settings.mode = MAIN_MENU;
-  settings.background_scrool_speed = 0.0f;
+  settings.background_scrool_speed = 0.04f;
+  settings.is_paused = false;
 
+  float background_scroll_y = 0.0f;
   InitWindow(settings.screen_width, settings.screen_height, title);
-  Texture2D background_layer_1 =
-      LoadTexture("./assets/Red_Background_Version2_Layer1.png");
-  Texture2D background_layer_2 =
-      LoadTexture("./assets/Red_Background_Version2_Layer2.png");
-  SetTargetFPS(60);
-  Texture2D background_layer_3 =
-      LoadTexture("./assets/Red_Background_Version2_Layer3.png");
-  Texture2D background_layer_4 =
-      LoadTexture("./assets/Red_Background_Version2_Layer4.png");
+
+  for (int i = 0; i < 4; i++) {
+    backgrounds[0].texture = LoadTexture(backgrounds[0].path);
+  };
   Texture2D spaceship_full_health =
       LoadTexture("./assets/Foozle_2DS0011_Void_MainShip/Main Ship/Main Ship - "
                   "Bases/PNGs/Main Ship - Base - Full health.png");
+  float background_scale =
+      (float)settings.screen_width / backgrounds[0].texture.width;
+  // Player rectangles and vector
   Vector2 origin = {spaceship_full_health.width / 2.0f,
                     spaceship_full_health.height / 2.0f};
   Rectangle sourceRec = {0, 0, spaceship_full_health.width,
@@ -152,31 +164,29 @@ int main(void) {
       get_text_position_y(settings.screen_height, settings.title_position);
 
   while (!settings.should_close && !WindowShouldClose()) {
-    settings.background_scrool_speed -= 0.4f;
-    if (settings.background_scrool_speed <= -background_layer_1.width * 2)
-      settings.background_scrool_speed = 0;
-
+    background_scroll_y -=
+        settings.background_scrool_speed; // All background assets are the same
+                                          // in size;
+    if (background_scroll_y <= -backgrounds[0].texture.height * background_scale) {
+      background_scroll_y = 0.0f;
+    }
     BeginDrawing();
 
     // Draw a background
     ClearBackground(BLACK);
-    DrawTextureEx(
-        background_layer_1, (Vector2){0, settings.background_scrool_speed},
-        0.0f, (float)settings.screen_width / background_layer_1.width, WHITE);
-    DrawTextureEx(
-        background_layer_2, (Vector2){0, settings.background_scrool_speed},
-        0.0f, (float)settings.screen_width / background_layer_2.width, WHITE);
-    DrawTextureEx(
-        background_layer_3, (Vector2){0, settings.background_scrool_speed},
-        0.0f, (float)settings.screen_width / background_layer_3.width, WHITE);
-    DrawTextureEx(
-        background_layer_4, (Vector2){0, settings.background_scrool_speed},
-        0.0f, (float)settings.screen_width / background_layer_4.width, WHITE);
-    // end of drawing background
+    for ( int i = 0; i < 4; i++) {
+    DrawTextureEx(backgrounds[i].texture, (Vector2){0, background_scroll_y}, 0.0f,
+                  background_scale, WHITE);
+    DrawTextureEx(backgrounds[i].texture,
+                  (Vector2){0, background_scroll_y + backgrounds[0].texture.height *
+                                                         background_scale},
+                  0.0f, background_scale, WHITE);};
+   // end of drawing background
 
     // MAIN MENU
     if (settings.mode == MAIN_MENU) {
-      DrawText(main_menu_title, title_position_x, title_position_y,
+      DrawText(TextFormat("ScrollY = %f", background_scroll_y), 400, 300, 15, WHITE);
+     DrawText(main_menu_title, title_position_x, title_position_y,
                settings.main_title_fsz, RAYWHITE);
       for (int i = 0; i < 3; i++) {
         DrawText(buttons[i].text, buttons[i].x_pos, buttons[i].y_pos,
@@ -213,10 +223,9 @@ int main(void) {
     // END OF ACTUAL GAME
     EndDrawing();
   }
-  UnloadTexture(background_layer_1);
-  UnloadTexture(background_layer_2);
-  UnloadTexture(background_layer_3);
-  UnloadTexture(background_layer_4);
+  for (int i = 0; i < 4; i++) {
+    UnloadTexture(backgrounds[0].texture);
+  };
   UnloadTexture(spaceship_full_health);
   CloseWindow();
   return 0;
