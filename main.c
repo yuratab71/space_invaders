@@ -176,11 +176,11 @@ int main(void) {
       get_text_position_y(settings.screen_height, settings.title_position);
 
   while (!settings.should_close && !WindowShouldClose()) {
-    background_scroll_y -=
+    background_scroll_y +=
         settings.background_scrool_speed; // All background assets are the same
                                           // in size;
-    if (background_scroll_y <=
-        -backgrounds[0].texture.height * background_scale) {
+    if (background_scroll_y >=
+        backgrounds[0].texture.height * background_scale) {
       background_scroll_y = 0.0f;
     }
     BeginDrawing();
@@ -192,7 +192,7 @@ int main(void) {
                     0.0f, background_scale, WHITE);
       DrawTextureEx(
           backgrounds[i].texture,
-          (Vector2){0, background_scroll_y +
+          (Vector2){0, background_scroll_y -
                            backgrounds[0].texture.height * background_scale},
           0.0f, background_scale, WHITE);
     };
