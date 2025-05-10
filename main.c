@@ -244,14 +244,20 @@ int main(void) {
         process_key_main_game(KEY_LEFT, &player, settings.screen_width);
       } else {
         if (player.acceleration < 0 && !settings.is_paused) {
-          player.acceleration += player.decceleration_speed * GetFrameTime();
+          if (player.acceleration > -0.1f) {
+            player.acceleration = 0.0f;
+          } else {
+          player.acceleration += player.decceleration_speed * GetFrameTime();};
         };
       };
       if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
         process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
       } else {
         if (player.acceleration > 0 && !settings.is_paused) {
-          player.acceleration -= player.decceleration_speed * GetFrameTime();
+          if (player.acceleration < 0.1f) {
+            player.acceleration = 0.0f;
+          } else {
+          player.acceleration -= player.decceleration_speed * GetFrameTime();};
         };
       };
     };
