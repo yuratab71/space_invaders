@@ -22,6 +22,10 @@ struct Settings {
 
 struct PlayerSettings {
   Rectangle position;
+  float acceleration;
+  float acceleration_speed;
+  float decceleration_speed;
+  float max_acceleration;
   int health;
 } player;
 
@@ -80,15 +84,14 @@ void process_key_main_menu(int key, struct Settings *settings) {
 void process_key_main_game(int key, struct PlayerSettings *player, int width) {
   switch (key) {
   case KEY_LEFT:
-    if (player->position.x < 0)
-      player->position.x = width;
-    player->position.x -= 3;
+    if (player->acceleration <= 0.0f - player->max_acceleration)
+      break;
+    player->acceleration -= player->acceleration_speed * GetFrameTime();
     break;
   case KEY_RIGHT:
-    if (player->position.x > width)
-      player->position.x = 0;
-    player->position.x += 3;
-
+    if (player->acceleration >= player->max_acceleration)
+      break;
+    player->acceleration += player->acceleration_speed * GetFrameTime();
     break;
   default:
     break;
@@ -99,10 +102,14 @@ char buttons_text[3][10] = {"Start", "Settings", "Exit"};
 struct MainMenuButton buttons[3];
 
 struct Background backgrounds[4] = {
-    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer1.png"},
-    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer2.png"},
-    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer3.png"},
-    {.path = "./assets/2D Space Parallax Backgrounds/Purple/T_PurpleBackground_Version1_Layer4.png"}};
+    {.path = "./assets/2D Space Parallax "
+             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer1.png"},
+    {.path = "./assets/2D Space Parallax "
+             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer2.png"},
+    {.path = "./assets/2D Space Parallax "
+             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer3.png"},
+    {.path = "./assets/2D Space Parallax "
+             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer4.png"}};
 
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
@@ -144,6 +151,11 @@ int main(void) {
   player.position.width = spaceship_full_health.width;
   player.position.height = spaceship_full_health.height;
   player.health = 100;
+  player.acceleration = 0.0f;
+  player.acceleration_speed = 100.0f;
+  player.decceleration_speed = 120.0f;
+  player.max_acceleration = 170.0f;
+
   for (int i = 0; i < settings.buttons_count; i++) {
     buttons[i].text = buttons_text[i];
     buttons[i].x_pos = get_text_position_x(settings.screen_width,
@@ -167,26 +179,28 @@ int main(void) {
     background_scroll_y -=
         settings.background_scrool_speed; // All background assets are the same
                                           // in size;
-    if (background_scroll_y <= -backgrounds[0].texture.height * background_scale) {
+    if (background_scroll_y <=
+        -backgrounds[0].texture.height * background_scale) {
       background_scroll_y = 0.0f;
     }
     BeginDrawing();
 
     // Draw a background
     ClearBackground(BLACK);
-    for ( int i = 0; i < 4; i++) {
-    DrawTextureEx(backgrounds[i].texture, (Vector2){0, background_scroll_y}, 0.0f,
-                  background_scale, WHITE);
-    DrawTextureEx(backgrounds[i].texture,
-                  (Vector2){0, background_scroll_y + backgrounds[0].texture.height *
-                                                         background_scale},
-                  0.0f, background_scale, WHITE);};
-   // end of drawing background
+    for (int i = 0; i < 4; i++) {
+      DrawTextureEx(backgrounds[i].texture, (Vector2){0, background_scroll_y},
+                    0.0f, background_scale, WHITE);
+      DrawTextureEx(
+          backgrounds[i].texture,
+          (Vector2){0, background_scroll_y +
+                           backgrounds[0].texture.height * background_scale},
+          0.0f, background_scale, WHITE);
+    };
+    // end of drawing background
 
     // MAIN MENU
     if (settings.mode == MAIN_MENU) {
-      DrawText(TextFormat("ScrollY = %f", background_scroll_y), 400, 300, 15, WHITE);
-     DrawText(main_menu_title, title_position_x, title_position_y,
+      DrawText(main_menu_title, title_position_x, title_position_y,
                settings.main_title_fsz, RAYWHITE);
       for (int i = 0; i < 3; i++) {
         DrawText(buttons[i].text, buttons[i].x_pos, buttons[i].y_pos,
@@ -203,6 +217,12 @@ int main(void) {
 
     // ACTUAL GAME
     if (settings.mode == GAME) {
+      player.position.x += player.acceleration * GetFrameTime();
+      if (player.position.x < 0)
+        player.position.x = settings.screen_width;
+      if (player.position.x > settings.screen_width)
+        player.position.x = 0;
+
       DrawText("Press Backspace to Leave", 20, 20, 10, RAYWHITE);
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MAIN_MENU;
@@ -210,21 +230,31 @@ int main(void) {
       DrawText(
           TextFormat("X = %f, Y = %f", player.position.x, player.position.y),
           settings.screen_width - 300, 20, 15, RAYWHITE);
+      DrawText(TextFormat("Acc = %f", player.acceleration),
+               settings.screen_width - 300, 40, 15, RAYWHITE);
       DrawTexturePro(spaceship_full_health, sourceRec, player.position, origin,
                      0.0f, WHITE);
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
       if (IsKeyDown(KEY_LEFT)) {
         process_key_main_game(KEY_LEFT, &player, settings.screen_width);
+      } else {
+        if (player.acceleration < 0) {
+          player.acceleration += player.decceleration_speed * GetFrameTime();
+        };
       };
       if (IsKeyDown(KEY_RIGHT)) {
         process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
+      } else {
+        if (player.acceleration > 0) {
+          player.acceleration -= player.decceleration_speed * GetFrameTime();
+        };
       };
     };
     // END OF ACTUAL GAME
     EndDrawing();
   }
   for (int i = 0; i < 4; i++) {
-    UnloadTexture(backgrounds[0].texture);
+    UnloadTexture(backgrounds[i].texture);
   };
   UnloadTexture(spaceship_full_health);
   CloseWindow();
