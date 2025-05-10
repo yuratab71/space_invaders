@@ -176,7 +176,7 @@ int main(void) {
       get_text_position_y(settings.screen_height, settings.title_position);
 
   while (!settings.should_close && !WindowShouldClose()) {
-    background_scroll_y +=
+    if (!settings.is_paused) background_scroll_y +=
         settings.background_scrool_speed; // All background assets are the same
                                           // in size;
     if (background_scroll_y >=
@@ -196,6 +196,8 @@ int main(void) {
                            backgrounds[0].texture.height * background_scale},
           0.0f, background_scale, WHITE);
     };
+    if (settings.is_paused)
+      DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
     // end of drawing background
 
     // MAIN MENU
@@ -217,7 +219,9 @@ int main(void) {
 
     // ACTUAL GAME
     if (settings.mode == GAME) {
-      player.position.x += player.acceleration * GetFrameTime();
+      if (IsKeyPressed(KEY_SPACE))
+        settings.is_paused = !settings.is_paused;
+      if (!settings.is_paused) player.position.x += player.acceleration * GetFrameTime();
       if (player.position.x < 0)
         player.position.x = settings.screen_width;
       if (player.position.x > settings.screen_width)
@@ -235,17 +239,17 @@ int main(void) {
       DrawTexturePro(spaceship_full_health, sourceRec, player.position, origin,
                      0.0f, WHITE);
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
-      if (IsKeyDown(KEY_LEFT)) {
+      if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
         process_key_main_game(KEY_LEFT, &player, settings.screen_width);
       } else {
-        if (player.acceleration < 0) {
+        if (player.acceleration < 0 && !settings.is_paused) {
           player.acceleration += player.decceleration_speed * GetFrameTime();
         };
       };
-      if (IsKeyDown(KEY_RIGHT)) {
+      if (IsKeyDown(KEY_RIGHT)&& !settings.is_paused) {
         process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
       } else {
-        if (player.acceleration > 0) {
+        if (player.acceleration > 0 && !settings.is_paused) {
           player.acceleration -= player.decceleration_speed * GetFrameTime();
         };
       };
