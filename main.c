@@ -1,6 +1,5 @@
 #include "raylib.h"
 #include <stdbool.h>
-#include <stdio.h>
 
 enum Modes { MAIN_MENU, SETTINGS, GAME };
 
@@ -176,9 +175,10 @@ int main(void) {
       get_text_position_y(settings.screen_height, settings.title_position);
 
   while (!settings.should_close && !WindowShouldClose()) {
-    if (!settings.is_paused) background_scroll_y +=
-        settings.background_scrool_speed; // All background assets are the same
-                                          // in size;
+    if (!settings.is_paused)
+      background_scroll_y +=
+          settings.background_scrool_speed; // All background assets are the
+                                            // same in size;
     if (background_scroll_y >=
         backgrounds[0].texture.height * background_scale) {
       background_scroll_y = 0.0f;
@@ -221,7 +221,8 @@ int main(void) {
     if (settings.mode == GAME) {
       if (IsKeyPressed(KEY_SPACE))
         settings.is_paused = !settings.is_paused;
-      if (!settings.is_paused) player.position.x += player.acceleration * GetFrameTime();
+      if (!settings.is_paused)
+        player.position.x += player.acceleration * GetFrameTime();
       if (player.position.x < 0)
         player.position.x = settings.screen_width;
       if (player.position.x > settings.screen_width)
@@ -246,7 +247,7 @@ int main(void) {
           player.acceleration += player.decceleration_speed * GetFrameTime();
         };
       };
-      if (IsKeyDown(KEY_RIGHT)&& !settings.is_paused) {
+      if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
         process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
       } else {
         if (player.acceleration > 0 && !settings.is_paused) {
