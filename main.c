@@ -19,12 +19,18 @@ struct Settings {
   bool is_paused;
 } settings;
 
+struct Projectile {
+  struct Vector2 pos;
+  float acceleration;
+};
+
 struct PlayerSettings {
   Rectangle position;
   float acceleration;
   float acceleration_speed;
   float decceleration_speed;
   float max_acceleration;
+  struct Projectile bullets[5];
   int health;
 } player;
 
@@ -146,6 +152,8 @@ int main(void) {
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_02_png_processed.png");
   Texture2D spaceship_turn_left_2 = LoadTexture(
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_03_png_processed.png");
+  Texture2D projectile = LoadTexture(
+      "./assets/PixelSpaceRage/128px/Laser_Large_png_processed.png");
   float background_scale =
       (float)settings.screen_width / backgrounds[0].texture.width;
   // Player rectangles and vector
@@ -161,6 +169,12 @@ int main(void) {
   player.acceleration_speed = 100.0f;
   player.decceleration_speed = 120.0f;
   player.max_acceleration = 270.0f;
+  for (int i = 0; i < 5; i++) {
+    player.bullets[i].acceleration = 0.0f;
+    player.bullets[i].pos.x = (float)settings.screen_width / 2;
+    player.bullets[i].pos.y = 700;
+  };
+  int bullet_counter = 5;
 
   for (int i = 0; i < settings.buttons_count; i++) {
     buttons[i].text = buttons_text[i];
@@ -226,7 +240,7 @@ int main(void) {
 
     // ACTUAL GAME
     if (settings.mode == GAME) {
-      if (IsKeyPressed(KEY_SPACE))
+      if (IsKeyPressed(KEY_P))
         settings.is_paused = !settings.is_paused;
       if (!settings.is_paused)
         player.position.x += player.acceleration * GetFrameTime();
@@ -262,6 +276,27 @@ int main(void) {
                        WHITE);
       };
       // end of draw player
+      //
+      // Draw Projectiles
+      for (int i = 0; i < 5; i++) {
+        if (player.bullets[i].pos.y < -settings.screen_height) {
+          player.bullets[i].pos.y = player.position.y;
+          player.bullets[i].pos.x = player.position.x;
+          player.bullets[i].acceleration = 0.0f;
+        };
+        if (player.bullets[i].pos.y < player.position.y) player.bullets[i].acceleration += 15.0f * GetFrameTime();
+        player.bullets[i].pos.y -= player.bullets[i].acceleration;
+      };
+      if (IsKeyPressed(KEY_SPACE) && bullet_counter > 0) {
+        player.bullets[bullet_counter - 1].pos.y = player.position.y - spaceship_idle.height;
+        player.bullets[bullet_counter - 1].pos.x = player.position.x;
+        if (bullet_counter <= 5 && bullet_counter > 0) bullet_counter -= 1;
+      };
+      if (IsKeyPressed(KEY_R)) bullet_counter = 5;
+      for (int i = 0; i < 5; i++) {
+        if (player.bullets[i].pos.y < player.position.y) DrawTextureEx(projectile, player.bullets[i].pos, 0.0f, 1.0f, WHITE);
+      };
+      DrawText(TextFormat("Ammo %d", bullet_counter), settings.screen_width - 60, settings.screen_height - 30, 15, RAYWHITE);
       //
       // Health Bar
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
@@ -300,6 +335,7 @@ int main(void) {
   UnloadTexture(spaceship_turn_left_2);
   UnloadTexture(spaceship_turn_right_1);
   UnloadTexture(spaceship_turn_right_2);
+  UnloadTexture(projectile);
   CloseWindow();
   return 0;
 }
