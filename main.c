@@ -134,26 +134,33 @@ int main(void) {
   for (int i = 0; i < 4; i++) {
     backgrounds[0].texture = LoadTexture(backgrounds[0].path);
   };
-  Texture2D spaceship_full_health =
-      LoadTexture("./assets/Foozle_2DS0011_Void_MainShip/Main Ship/Main Ship - "
-                  "Bases/PNGs/Main Ship - Base - Full health.png");
+  Texture2D spaceship_idle = LoadTexture(
+      "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
+  Texture2D spaceship_turn_right_1 =
+      LoadTexture("./assets/PixelSpaceRage/128px/"
+                  "PlayerBlue_Frame_02_png_processed_flipped.png");
+  Texture2D spaceship_turn_right_2 =
+      LoadTexture("./assets/PixelSpaceRage/128px/"
+                  "PlayerBlue_Frame_03_png_processed_flipped.png");
+  Texture2D spaceship_turn_left_1 = LoadTexture(
+      "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_02_png_processed.png");
+  Texture2D spaceship_turn_left_2 = LoadTexture(
+      "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_03_png_processed.png");
   float background_scale =
       (float)settings.screen_width / backgrounds[0].texture.width;
   // Player rectangles and vector
-  Vector2 origin = {spaceship_full_health.width / 2.0f,
-                    spaceship_full_health.height / 2.0f};
-  Rectangle sourceRec = {0, 0, spaceship_full_health.width,
-                         spaceship_full_health.height};
+  Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
+  Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
   // Calculate position and focus for menu buttons for different screen sizes
   player.position.x = (float)settings.screen_width / 2;
   player.position.y = 700;
-  player.position.width = spaceship_full_health.width;
-  player.position.height = spaceship_full_health.height;
+  player.position.width = spaceship_idle.width;
+  player.position.height = spaceship_idle.height;
   player.health = 100;
   player.acceleration = 0.0f;
   player.acceleration_speed = 100.0f;
   player.decceleration_speed = 120.0f;
-  player.max_acceleration = 170.0f;
+  player.max_acceleration = 270.0f;
 
   for (int i = 0; i < settings.buttons_count; i++) {
     buttons[i].text = buttons_text[i];
@@ -232,14 +239,33 @@ int main(void) {
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MAIN_MENU;
       };
+
+      // Draw Metrics, just for development
       DrawText(
           TextFormat("X = %f, Y = %f", player.position.x, player.position.y),
           settings.screen_width - 300, 20, 15, RAYWHITE);
       DrawText(TextFormat("Acc = %f", player.acceleration),
                settings.screen_width - 300, 40, 15, RAYWHITE);
-      DrawTexturePro(spaceship_full_health, sourceRec, player.position, origin,
-                     0.0f, WHITE);
+      //
+
+      // Draw Player
+      if (player.acceleration > 70.0f || player.acceleration < -70.0f) {
+        DrawTexturePro(player.acceleration > 0 ? spaceship_turn_right_2
+                                               : spaceship_turn_left_2,
+                       sourceRec, player.position, origin, 0.0f, WHITE);
+      } else if (player.acceleration > 30.0f || player.acceleration < -30.0f) {
+        DrawTexturePro(player.acceleration > 0 ? spaceship_turn_right_1
+                                               : spaceship_turn_left_1,
+                       sourceRec, player.position, origin, 0.0f, WHITE);
+      } else {
+        DrawTexturePro(spaceship_idle, sourceRec, player.position, origin, 0.0f,
+                       WHITE);
+      };
+      // end of draw player
+      //
+      // Health Bar
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
+
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
         process_key_main_game(KEY_LEFT, &player, settings.screen_width);
       } else {
@@ -247,7 +273,8 @@ int main(void) {
           if (player.acceleration > -0.1f) {
             player.acceleration = 0.0f;
           } else {
-          player.acceleration += player.decceleration_speed * GetFrameTime();};
+            player.acceleration += player.decceleration_speed * GetFrameTime();
+          };
         };
       };
       if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
@@ -257,7 +284,8 @@ int main(void) {
           if (player.acceleration < 0.1f) {
             player.acceleration = 0.0f;
           } else {
-          player.acceleration -= player.decceleration_speed * GetFrameTime();};
+            player.acceleration -= player.decceleration_speed * GetFrameTime();
+          };
         };
       };
     };
@@ -267,7 +295,11 @@ int main(void) {
   for (int i = 0; i < 4; i++) {
     UnloadTexture(backgrounds[i].texture);
   };
-  UnloadTexture(spaceship_full_health);
+  UnloadTexture(spaceship_idle);
+  UnloadTexture(spaceship_turn_left_1);
+  UnloadTexture(spaceship_turn_left_2);
+  UnloadTexture(spaceship_turn_right_1);
+  UnloadTexture(spaceship_turn_right_2);
   CloseWindow();
   return 0;
 }
