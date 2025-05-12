@@ -1,7 +1,8 @@
 #include "raylib.h"
 #include <stdbool.h>
+
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
@@ -10,6 +11,7 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #ifdef __cplusplus
 }
 #endif
+
 enum Modes { MAIN_MENU, SETTINGS, GAME };
 
 struct Settings {
@@ -153,8 +155,7 @@ int main(void) {
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_03_png_processed.png");
   Texture2D projectile = LoadTexture(
       "./assets/PixelSpaceRage/128px/Laser_Large_png_processed.png");
-  float background_scale =
-      (float)settings.screen_width / background.width;
+  float background_scale = (float)settings.screen_width / background.width;
   // Player rectangles and vector
   Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
   Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
@@ -199,21 +200,19 @@ int main(void) {
       background_scroll_y +=
           settings.background_scrool_speed; // All background assets are the
                                             // same in size;
-    if (background_scroll_y >=
-        background.height * background_scale) {
+    if (background_scroll_y >= background.height * background_scale) {
       background_scroll_y = 0.0f;
     }
     BeginDrawing();
 
     // Draw a background
     ClearBackground(BLACK);
-      DrawTextureEx(background, (Vector2){0, background_scroll_y},
-                    0.0f, background_scale, WHITE);
-      DrawTextureEx(
-          background,
-          (Vector2){0, background_scroll_y -
-                           background.height * background_scale},
-          0.0f, background_scale, WHITE);
+    DrawTextureEx(background, (Vector2){0, background_scroll_y}, 0.0f,
+                  background_scale, WHITE);
+    DrawTextureEx(background,
+                  (Vector2){0, background_scroll_y -
+                                   background.height * background_scale},
+                  0.0f, background_scale, WHITE);
 
     if (settings.is_paused)
       DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
