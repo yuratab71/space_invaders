@@ -1,3 +1,4 @@
+#include "background.h"
 #include "raylib.h"
 #include <stdbool.h>
 
@@ -26,7 +27,6 @@ struct Settings {
   int buttons_count;
   int position_step_y;
   enum Modes mode;
-  float background_scrool_speed;
   bool is_paused;
 } settings;
 
@@ -52,10 +52,7 @@ struct MainMenuButton {
   bool is_focused;
 };
 
-struct Background {
-  char *path;
-  Texture2D texture;
-};
+BackgroundSettings background;
 
 int get_text_position_x(int screen_width, char text[], int font_size) {
   return (screen_width - MeasureText(text, font_size)) / 2;
@@ -132,15 +129,19 @@ int main(void) {
   settings.should_close = false;
   settings.position_step_y = settings.screen_height / 16;
   settings.mode = MAIN_MENU;
-  settings.background_scrool_speed = 0.50f;
   settings.is_paused = false;
 
-  float background_scroll_y = 0.0f;
+  // Background initialization
+
   InitWindow(settings.screen_width, settings.screen_height, title);
   SetWindowState(FLAG_VSYNC_HINT);
 
-  Texture2D background = LoadTexture(
+  background.texture = LoadTexture(
       "./assets/PixelSpaceRage/PixelBackgroundSeamlessVertically.png");
+  background.y_pos = 0.0f;
+  background.scroll_speed = 0.5f;
+  background.scale = (float)settings.screen_width / background.texture.width;
+
   Texture2D spaceship_idle = LoadTexture(
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
   Texture2D spaceship_turn_right_1 =
@@ -155,7 +156,6 @@ int main(void) {
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_03_png_processed.png");
   Texture2D projectile = LoadTexture(
       "./assets/PixelSpaceRage/128px/Laser_Large_png_processed.png");
-  float background_scale = (float)settings.screen_width / background.width;
   // Player rectangles and vector
   Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
   Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
@@ -197,22 +197,13 @@ int main(void) {
 
   while (!settings.should_close && !WindowShouldClose()) {
     if (!settings.is_paused)
-      background_scroll_y +=
-          settings.background_scrool_speed; // All background assets are the
-                                            // same in size;
-    if (background_scroll_y >= background.height * background_scale) {
-      background_scroll_y = 0.0f;
-    }
+      CalculateBackgroundPosition(&background);
+
     BeginDrawing();
 
     // Draw a background
     ClearBackground(BLACK);
-    DrawTextureEx(background, (Vector2){0, background_scroll_y}, 0.0f,
-                  background_scale, WHITE);
-    DrawTextureEx(background,
-                  (Vector2){0, background_scroll_y -
-                                   background.height * background_scale},
-                  0.0f, background_scale, WHITE);
+    DrawBackground(&background);
 
     if (settings.is_paused)
       DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
@@ -331,7 +322,7 @@ int main(void) {
     // END OF ACTUAL GAME
     EndDrawing();
   }
-  UnloadTexture(background);
+  UnloadTexture(background.texture);
   UnloadTexture(spaceship_idle);
   UnloadTexture(spaceship_turn_left_1);
   UnloadTexture(spaceship_turn_left_2);
