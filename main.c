@@ -1,6 +1,15 @@
 #include "raylib.h"
 #include <stdbool.h>
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
+__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+
+#ifdef __cplusplus
+}
+#endif
 enum Modes { MAIN_MENU, SETTINGS, GAME };
 
 struct Settings {
@@ -106,16 +115,6 @@ void process_key_main_game(int key, struct PlayerSettings *player, int width) {
 char buttons_text[3][10] = {"Start", "Settings", "Exit"};
 struct MainMenuButton buttons[3];
 
-struct Background backgrounds[4] = {
-    {.path = "./assets/2D Space Parallax "
-             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer1.png"},
-    {.path = "./assets/2D Space Parallax "
-             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer2.png"},
-    {.path = "./assets/2D Space Parallax "
-             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer3.png"},
-    {.path = "./assets/2D Space Parallax "
-             "Backgrounds/Purple/T_PurpleBackground_Version1_Layer4.png"}};
-
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
@@ -131,15 +130,15 @@ int main(void) {
   settings.should_close = false;
   settings.position_step_y = settings.screen_height / 16;
   settings.mode = MAIN_MENU;
-  settings.background_scrool_speed = 0.04f;
+  settings.background_scrool_speed = 0.50f;
   settings.is_paused = false;
 
   float background_scroll_y = 0.0f;
   InitWindow(settings.screen_width, settings.screen_height, title);
+  SetWindowState(FLAG_VSYNC_HINT);
 
-  for (int i = 0; i < 4; i++) {
-    backgrounds[0].texture = LoadTexture(backgrounds[0].path);
-  };
+  Texture2D background = LoadTexture(
+      "./assets/PixelSpaceRage/PixelBackgroundSeamlessVertically.png");
   Texture2D spaceship_idle = LoadTexture(
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
   Texture2D spaceship_turn_right_1 =
@@ -155,7 +154,7 @@ int main(void) {
   Texture2D projectile = LoadTexture(
       "./assets/PixelSpaceRage/128px/Laser_Large_png_processed.png");
   float background_scale =
-      (float)settings.screen_width / backgrounds[0].texture.width;
+      (float)settings.screen_width / background.width;
   // Player rectangles and vector
   Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
   Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
@@ -201,22 +200,21 @@ int main(void) {
           settings.background_scrool_speed; // All background assets are the
                                             // same in size;
     if (background_scroll_y >=
-        backgrounds[0].texture.height * background_scale) {
+        background.height * background_scale) {
       background_scroll_y = 0.0f;
     }
     BeginDrawing();
 
     // Draw a background
     ClearBackground(BLACK);
-    for (int i = 0; i < 4; i++) {
-      DrawTextureEx(backgrounds[i].texture, (Vector2){0, background_scroll_y},
+      DrawTextureEx(background, (Vector2){0, background_scroll_y},
                     0.0f, background_scale, WHITE);
       DrawTextureEx(
-          backgrounds[i].texture,
+          background,
           (Vector2){0, background_scroll_y -
-                           backgrounds[0].texture.height * background_scale},
+                           background.height * background_scale},
           0.0f, background_scale, WHITE);
-    };
+
     if (settings.is_paused)
       DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
     // end of drawing background
@@ -284,19 +282,26 @@ int main(void) {
           player.bullets[i].pos.x = player.position.x;
           player.bullets[i].acceleration = 0.0f;
         };
-        if (player.bullets[i].pos.y < player.position.y) player.bullets[i].acceleration += 15.0f * GetFrameTime();
+        if (player.bullets[i].pos.y < player.position.y)
+          player.bullets[i].acceleration += 15.0f * GetFrameTime();
         player.bullets[i].pos.y -= player.bullets[i].acceleration;
       };
       if (IsKeyPressed(KEY_SPACE) && bullet_counter > 0) {
-        player.bullets[bullet_counter - 1].pos.y = player.position.y - spaceship_idle.height;
+        player.bullets[bullet_counter - 1].pos.y =
+            player.position.y - spaceship_idle.height;
         player.bullets[bullet_counter - 1].pos.x = player.position.x;
-        if (bullet_counter <= 5 && bullet_counter > 0) bullet_counter -= 1;
+        if (bullet_counter <= 5 && bullet_counter > 0)
+          bullet_counter -= 1;
       };
-      if (IsKeyPressed(KEY_R)) bullet_counter = 5;
+      if (IsKeyPressed(KEY_R))
+        bullet_counter = 5;
       for (int i = 0; i < 5; i++) {
-        if (player.bullets[i].pos.y < player.position.y) DrawTextureEx(projectile, player.bullets[i].pos, 0.0f, 1.0f, WHITE);
+        if (player.bullets[i].pos.y < player.position.y)
+          DrawTextureEx(projectile, player.bullets[i].pos, 0.0f, 1.0f, WHITE);
       };
-      DrawText(TextFormat("Ammo %d", bullet_counter), settings.screen_width - 60, settings.screen_height - 30, 15, RAYWHITE);
+      DrawText(TextFormat("Ammo %d", bullet_counter),
+               settings.screen_width - 60, settings.screen_height - 30, 15,
+               RAYWHITE);
       //
       // Health Bar
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
@@ -304,8 +309,8 @@ int main(void) {
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
         process_key_main_game(KEY_LEFT, &player, settings.screen_width);
       } else {
-        if (player.acceleration < 0 && !settings.is_paused) {
-          if (player.acceleration > -0.1f) {
+        if (player.acceleration < 0.0f && !settings.is_paused) {
+          if (player.acceleration > -0.5f) {
             player.acceleration = 0.0f;
           } else {
             player.acceleration += player.decceleration_speed * GetFrameTime();
@@ -315,8 +320,8 @@ int main(void) {
       if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
         process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
       } else {
-        if (player.acceleration > 0 && !settings.is_paused) {
-          if (player.acceleration < 0.1f) {
+        if (player.acceleration > 0.0f && !settings.is_paused) {
+          if (player.acceleration < 0.5f) {
             player.acceleration = 0.0f;
           } else {
             player.acceleration -= player.decceleration_speed * GetFrameTime();
@@ -327,9 +332,7 @@ int main(void) {
     // END OF ACTUAL GAME
     EndDrawing();
   }
-  for (int i = 0; i < 4; i++) {
-    UnloadTexture(backgrounds[i].texture);
-  };
+  UnloadTexture(background);
   UnloadTexture(spaceship_idle);
   UnloadTexture(spaceship_turn_left_1);
   UnloadTexture(spaceship_turn_left_2);
