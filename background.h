@@ -11,7 +11,7 @@ typedef struct {
   Texture2D texture;
 } BackgroundSettings;
 
-float get_background_scale(int swidth, int bwidth);
+float GetBackgroundScale(int s_width, int b_width);
 
 void CalculateBackgroundPosition(BackgroundSettings* bstn);
 

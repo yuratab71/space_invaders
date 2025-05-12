@@ -2,8 +2,8 @@
 #include "raylib.h"
 #include <stdbool.h>
 
-float get_background_scale(int swidth, int bwidth) {
-  return (float)swidth / bwidth;
+float GetBackgroundScale(int s_width, int b_width) {
+  return (float) s_width / b_width;
 };
 
 void CalculateBackgroundPosition(BackgroundSettings *bstn) {

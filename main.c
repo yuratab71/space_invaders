@@ -140,7 +140,7 @@ int main(void) {
       "./assets/PixelSpaceRage/PixelBackgroundSeamlessVertically.png");
   background.y_pos = 0.0f;
   background.scroll_speed = 0.5f;
-  background.scale = (float)settings.screen_width / background.texture.width;
+  background.scale = GetBackgroundScale(settings.screen_width, background.texture.width);
 
   Texture2D spaceship_idle = LoadTexture(
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
