@@ -1,5 +1,8 @@
 #include "background.h"
+#include "main_menu.h"
+#include "global_settings.h"
 #include "raylib.h"
+#include "global_settings.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -12,23 +15,6 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #ifdef __cplusplus
 }
 #endif
-
-enum Modes { MAIN_MENU, SETTINGS, GAME };
-
-struct Settings {
-  int screen_width;
-  int screen_height;
-  bool should_close;
-  int focus;
-  int main_title_fsz;
-  int fsz;
-  int title_position;
-  int menu_button_position;
-  int buttons_count;
-  int position_step_y;
-  enum Modes mode;
-  bool is_paused;
-} settings;
 
 struct Projectile {
   struct Vector2 pos;
@@ -45,56 +31,16 @@ struct PlayerSettings {
   int health;
 } player;
 
-struct MainMenuButton {
-  char *text;
-  int x_pos;
-  int y_pos;
-  bool is_focused;
-};
-
+GlobalSettings settings;
 BackgroundSettings background;
-
-int get_text_position_x(int screen_width, char text[], int font_size) {
-  return (screen_width - MeasureText(text, font_size)) / 2;
+MenuSettings menu;
+Btn buttons[2];
+char * btn_text[] = {
+  "Start",
+  "Exit"
 };
 
-int get_text_position_y(int screen_height, int step) {
-  return screen_height / 16 * step;
-};
-
-void process_key_main_menu(int key, struct Settings *settings) {
-  switch (key) {
-  case KEY_DOWN:
-    if (settings->focus == 2) {
-      settings->focus = 0;
-      break;
-    };
-    settings->focus = settings->focus + 1;
-    break;
-  case KEY_UP:
-    if (settings->focus == 0) {
-      settings->focus = 2;
-      break;
-    }
-    settings->focus = settings->focus - 1;
-    break;
-  case KEY_ENTER:
-    if (settings->focus == 2) {
-      settings->should_close = true;
-      break;
-    };
-    if (settings->focus == 0) {
-      settings->mode = GAME;
-      break;
-    };
-    break;
-    break;
-  default:
-    break;
-  };
-};
-
-void process_key_main_game(int key, struct PlayerSettings *player, int width) {
+void process_key_main_game(int key, struct PlayerSettings *player) {
   switch (key) {
   case KEY_LEFT:
     if (player->acceleration <= 0.0f - player->max_acceleration)
@@ -111,36 +57,49 @@ void process_key_main_game(int key, struct PlayerSettings *player, int width) {
   };
 };
 
-char buttons_text[3][10] = {"Start", "Settings", "Exit"};
-struct MainMenuButton buttons[3];
-
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
 int main(void) {
   settings.screen_width = 1024;
   settings.screen_height = 800;
-  settings.buttons_count = 3;
-  settings.focus = 0;
-  settings.fsz = 20;
-  settings.main_title_fsz = 40;
-  settings.title_position = 5;
-  settings.menu_button_position = 8;
   settings.should_close = false;
-  settings.position_step_y = settings.screen_height / 16;
-  settings.mode = MAIN_MENU;
+  settings.mode = MENU;
   settings.is_paused = false;
-
-  // Background initialization
 
   InitWindow(settings.screen_width, settings.screen_height, title);
   SetWindowState(FLAG_VSYNC_HINT);
 
+  // Background initialization
   background.texture = LoadTexture(
       "./assets/PixelSpaceRage/PixelBackgroundSeamlessVertically.png");
   background.y_pos = 0.0f;
   background.scroll_speed = 0.5f;
-  background.scale = GetBackgroundScale(settings.screen_width, background.texture.width);
+  background.scale =
+      GetBackgroundScale(settings.screen_width, background.texture.width);
+  // end of background initialization
+
+  //Menu initialization
+  menu.title_fz = 30;
+  menu.title_text = "Hello, Space Invaders!";
+  menu.title_pos_y = 400;
+  menu.title_pos_x = CalculateXPos(menu.title_text, settings.screen_width, menu.title_fz);
+
+  menu.position_step_y = 8;
+  menu.focus = 0;
+  menu.btn_fsz = 20;
+  
+
+
+  for (int i = 0; i < 2; i++) {
+  buttons[i].text = btn_text[i];
+  buttons[i].step = menu.position_step_y + i + 1;
+  buttons[i].x_pos = CalculateXPos(buttons[i].text, settings.screen_width, menu.btn_fsz);
+    buttons[i].y_pos = CalculateYPos(settings.screen_height, menu.position_step_y);
+  buttons[i].y_pos = 500;
+  buttons[i].is_focused = !i;
+  };
+  //End of menu initialization
 
   Texture2D spaceship_idle = LoadTexture(
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
@@ -159,7 +118,7 @@ int main(void) {
   // Player rectangles and vector
   Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
   Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
-  // Calculate position and focus for menu buttons for different screen sizes
+
   player.position.x = (float)settings.screen_width / 2;
   player.position.y = 700;
   player.position.width = spaceship_idle.width;
@@ -176,26 +135,7 @@ int main(void) {
   };
   int bullet_counter = 5;
 
-  for (int i = 0; i < settings.buttons_count; i++) {
-    buttons[i].text = buttons_text[i];
-    buttons[i].x_pos = get_text_position_x(settings.screen_width,
-                                           buttons_text[i], settings.fsz);
-    buttons[i].y_pos = get_text_position_y(
-        settings.screen_height, settings.menu_button_position + 1 + i);
-    if (!i) {
-      buttons[i].is_focused = true;
-    } else {
-      buttons[i].is_focused = false;
-    };
-  };
-  //
-
-  int title_position_x = get_text_position_x(
-      settings.screen_width, main_menu_title, settings.main_title_fsz);
-  int title_position_y =
-      get_text_position_y(settings.screen_height, settings.title_position);
-
-  while (!settings.should_close && !WindowShouldClose()) {
+ while (!settings.should_close && !WindowShouldClose()) {
     if (!settings.is_paused)
       CalculateBackgroundPosition(&background);
 
@@ -210,19 +150,15 @@ int main(void) {
     // end of drawing background
 
     // MAIN MENU
-    if (settings.mode == MAIN_MENU) {
-      DrawText(main_menu_title, title_position_x, title_position_y,
-               settings.main_title_fsz, RAYWHITE);
-      for (int i = 0; i < 3; i++) {
-        DrawText(buttons[i].text, buttons[i].x_pos, buttons[i].y_pos,
-                 settings.fsz, i == settings.focus ? ORANGE : RAYWHITE);
-      };
+    if (settings.mode == MENU) {
+      MenuDrawTitle(&menu);
+      MenuDrawButtons(&menu, buttons);
       if (IsKeyPressed(KEY_DOWN))
-        process_key_main_menu(KEY_DOWN, &settings);
+        MenuProcessKey(KEY_DOWN, &menu, &settings);
       if (IsKeyPressed(KEY_UP))
-        process_key_main_menu(KEY_UP, &settings);
+        MenuProcessKey(KEY_UP, &menu, &settings);
       if (IsKeyPressed(KEY_ENTER))
-        process_key_main_menu(KEY_ENTER, &settings);
+        MenuProcessKey(KEY_ENTER, &menu, &settings);
     };
     // END OF MAIN MENU
 
@@ -239,7 +175,7 @@ int main(void) {
 
       DrawText("Press Backspace to Leave", 20, 20, 10, RAYWHITE);
       if (IsKeyReleased(KEY_BACKSPACE)) {
-        settings.mode = MAIN_MENU;
+        settings.mode = MENU;
       };
 
       // Draw Metrics, just for development
@@ -297,7 +233,7 @@ int main(void) {
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
 
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
-        process_key_main_game(KEY_LEFT, &player, settings.screen_width);
+        process_key_main_game(KEY_LEFT, &player);
       } else {
         if (player.acceleration < 0.0f && !settings.is_paused) {
           if (player.acceleration > -0.5f) {
@@ -308,7 +244,7 @@ int main(void) {
         };
       };
       if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
-        process_key_main_game(KEY_RIGHT, &player, settings.screen_width);
+        process_key_main_game(KEY_RIGHT, &player);
       } else {
         if (player.acceleration > 0.0f && !settings.is_paused) {
           if (player.acceleration < 0.5f) {
