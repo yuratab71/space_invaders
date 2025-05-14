@@ -105,18 +105,19 @@ int main(void) {
   int bullet_counter = max_bullets;
 
   while (!settings.should_close && !WindowShouldClose()) {
+    float delta = GetFrameTime();
+
     if (!settings.is_paused)
       CalculateBackgroundPosition(&background);
-
     BeginDrawing();
-
-    // Draw a background
     ClearBackground(BLACK);
     DrawBackground(&background);
-
     if (settings.is_paused)
       DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
-    // end of drawing background
+
+    DrawText(TextFormat("Delta = %f", delta), 200, 200, 15, RAYWHITE);
+    DrawText(TextFormat("Decc = %f", player.decceleration_speed), 200, 250, 15, RAYWHITE);
+    DrawText(TextFormat("Acc = %f", player.acceleration_speed), 200, 300, 15, RAYWHITE);
 
     // MAIN MENU
     if (settings.mode == MENU) {
@@ -136,7 +137,7 @@ int main(void) {
       if (IsKeyPressed(KEY_P))
         settings.is_paused = !settings.is_paused;
       if (!settings.is_paused)
-        player.position.x += player.acceleration * GetFrameTime();
+        player.position.x += player.acceleration * delta;
       if (player.position.x < 0)
         player.position.x = settings.screen_width;
       if (player.position.x > settings.screen_width)
@@ -171,24 +172,9 @@ int main(void) {
       // end of draw player
       //
       // Draw Projectiles
-      for (int i = 0; i < max_bullets; i++) {
-        if (player.bullets[i].pos.y < -settings.screen_height) {
-          player.bullets[i].pos.y = player.position.y;
-          player.bullets[i].pos.x = player.position.x;
-          player.bullets[i].acceleration = 0.0f;
-        };
-        if (player.bullets[i].pos.y < player.position.y)
-          player.bullets[i].acceleration += 15.0f * GetFrameTime();
-        player.bullets[i].pos.y -= player.bullets[i].acceleration;
-      };
+      GameCalculateBullets(&player, 20.0f, max_bullets, settings.screen_height);
       if (IsKeyPressed(KEY_SPACE)) {
-        player.bullets[bullet_counter - 1].pos.y =
-            player.position.y - spaceship_idle.height;
-        player.bullets[bullet_counter - 1].pos.x = player.position.x;
-        if (bullet_counter <= max_bullets && bullet_counter > 0)
-          bullet_counter -= 1;
-        if (!bullet_counter)
-          bullet_counter = max_bullets;
+        bullet_counter = GameProcessShooting(&player, bullet_counter, max_bullets);
       };
 
       for (int i = 0; i < max_bullets; i++) {
@@ -199,28 +185,26 @@ int main(void) {
                settings.screen_width - 60, settings.screen_height - 30, 15,
                RAYWHITE);
       //
-      // Health Bar
-      DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
 
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
-        GameProcessKey(KEY_LEFT, &player);
+        GameProcessKeyMovement(KEY_LEFT, &player);
       } else {
         if (player.acceleration < 0.0f && !settings.is_paused) {
           if (player.acceleration > -0.5f) {
             player.acceleration = 0.0f;
           } else {
-            player.acceleration += player.decceleration_speed * GetFrameTime();
+            player.acceleration += player.decceleration_speed * delta;
           };
         };
       };
       if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
-        GameProcessKey(KEY_RIGHT, &player);
+        GameProcessKeyMovement(KEY_RIGHT, &player);
       } else {
         if (player.acceleration > 0.0f && !settings.is_paused) {
           if (player.acceleration < 0.5f) {
             player.acceleration = 0.0f;
           } else {
-            player.acceleration -= player.decceleration_speed * GetFrameTime();
+            player.acceleration -= player.decceleration_speed * delta;
           };
         };
       };

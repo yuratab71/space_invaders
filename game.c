@@ -1,7 +1,7 @@
 #include "game.h"
 #include "raylib.h"
 
-void GameProcessKey(int key, PlayerSettings *player) {
+void GameProcessKeyMovement(int key, PlayerSettings *player) {
   switch (key) {
   case KEY_LEFT:
     if (player->acceleration <= 0.0f - player->max_acceleration)
@@ -19,4 +19,35 @@ void GameProcessKey(int key, PlayerSettings *player) {
     break;
   };
   return;
+};
+
+int GameProcessShooting(PlayerSettings *player, int bullet_counter,
+                        int max_bullets) {
+  player->bullets[bullet_counter - 1].pos.y = player->position.y - 70.0f;
+  player->bullets[bullet_counter - 1].pos.x = player->position.x;
+
+  if (bullet_counter == 1) {
+    return max_bullets;
+  };
+
+  return bullet_counter -= 1;
+};
+
+void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets,
+                          int s_height) {
+  for (int i = 0; i < max_bullets; i++) {
+    if (player->bullets[i].pos.y <
+        -s_height) { // set bullets to init points after reaching the out of
+                     // bounds
+      player->bullets[i].pos.y = player->position.y;
+      player->bullets[i].pos.x = player->position.x;
+      player->bullets[i].acceleration = 0.0f;
+    };
+
+    if (player->bullets[i].pos.y < player->position.y) {
+      player->bullets[i].acceleration += acc * GetFrameTime();
+    };
+
+    player->bullets[i].pos.y -= player->bullets[i].acceleration;
+  };
 };
