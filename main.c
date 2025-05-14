@@ -1,4 +1,5 @@
 #include "background.h"
+#include "game.h"
 #include "global_settings.h"
 #include "main_menu.h"
 #include "raylib.h"
@@ -15,50 +16,19 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 #endif
 
-struct Projectile {
-  struct Vector2 pos;
-  float acceleration;
-};
-
-struct PlayerSettings {
-  Rectangle position;
-  float acceleration;
-  float acceleration_speed;
-  float decceleration_speed;
-  float max_acceleration;
-  struct Projectile bullets[5];
-  int health;
-} player;
-
+PlayerSettings player;
 GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
 char *btn_text[] = {"Start", "Exit"};
 
-void process_key_main_game(int key, struct PlayerSettings *player) {
-  switch (key) {
-  case KEY_LEFT:
-    if (player->acceleration <= 0.0f - player->max_acceleration)
-      break;
-    player->acceleration -= player->acceleration_speed * GetFrameTime();
-    break;
-  case KEY_RIGHT:
-    if (player->acceleration >= player->max_acceleration)
-      break;
-    player->acceleration += player->acceleration_speed * GetFrameTime();
-    break;
-  default:
-    break;
-  };
-};
-
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
 int main(void) {
   settings.screen_width = 1024;
-  settings.screen_height = 800;
+  settings.screen_height = 720;
   settings.should_close = false;
   settings.mode = MENU;
   settings.is_paused = false;
@@ -118,7 +88,7 @@ int main(void) {
   Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
 
   player.position.x = (float)settings.screen_width / 2;
-  player.position.y = 700;
+  player.position.y = settings.screen_height - 70;
   player.position.width = spaceship_idle.width;
   player.position.height = spaceship_idle.height;
   player.health = 100;
@@ -126,12 +96,13 @@ int main(void) {
   player.acceleration_speed = 100.0f;
   player.decceleration_speed = 120.0f;
   player.max_acceleration = 270.0f;
-  for (int i = 0; i < 5; i++) {
+  int max_bullets = 8;
+  for (int i = 0; i < max_bullets; i++) {
     player.bullets[i].acceleration = 0.0f;
     player.bullets[i].pos.x = (float)settings.screen_width / 2;
     player.bullets[i].pos.y = 700;
   };
-  int bullet_counter = 5;
+  int bullet_counter = max_bullets;
 
   while (!settings.should_close && !WindowShouldClose()) {
     if (!settings.is_paused)
@@ -200,7 +171,7 @@ int main(void) {
       // end of draw player
       //
       // Draw Projectiles
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < max_bullets; i++) {
         if (player.bullets[i].pos.y < -settings.screen_height) {
           player.bullets[i].pos.y = player.position.y;
           player.bullets[i].pos.x = player.position.x;
@@ -210,16 +181,17 @@ int main(void) {
           player.bullets[i].acceleration += 15.0f * GetFrameTime();
         player.bullets[i].pos.y -= player.bullets[i].acceleration;
       };
-      if (IsKeyPressed(KEY_SPACE) && bullet_counter > 0) {
+      if (IsKeyPressed(KEY_SPACE)) {
         player.bullets[bullet_counter - 1].pos.y =
             player.position.y - spaceship_idle.height;
         player.bullets[bullet_counter - 1].pos.x = player.position.x;
-        if (bullet_counter <= 5 && bullet_counter > 0)
+        if (bullet_counter <= max_bullets && bullet_counter > 0)
           bullet_counter -= 1;
+        if (!bullet_counter)
+          bullet_counter = max_bullets;
       };
-      if (IsKeyPressed(KEY_R))
-        bullet_counter = 5;
-      for (int i = 0; i < 5; i++) {
+
+      for (int i = 0; i < max_bullets; i++) {
         if (player.bullets[i].pos.y < player.position.y)
           DrawTextureEx(projectile, player.bullets[i].pos, 0.0f, 1.0f, WHITE);
       };
@@ -231,7 +203,7 @@ int main(void) {
       DrawRectangle(20, settings.screen_height - 50, 100, 20, GREEN);
 
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
-        process_key_main_game(KEY_LEFT, &player);
+        GameProcessKey(KEY_LEFT, &player);
       } else {
         if (player.acceleration < 0.0f && !settings.is_paused) {
           if (player.acceleration > -0.5f) {
@@ -242,7 +214,7 @@ int main(void) {
         };
       };
       if (IsKeyDown(KEY_RIGHT) && !settings.is_paused) {
-        process_key_main_game(KEY_RIGHT, &player);
+        GameProcessKey(KEY_RIGHT, &player);
       } else {
         if (player.acceleration > 0.0f && !settings.is_paused) {
           if (player.acceleration < 0.5f) {
