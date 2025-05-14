@@ -1,8 +1,7 @@
 #include "background.h"
+#include "global_settings.h"
 #include "main_menu.h"
-#include "global_settings.h"
 #include "raylib.h"
-#include "global_settings.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -35,10 +34,7 @@ GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
-char * btn_text[] = {
-  "Start",
-  "Exit"
-};
+char *btn_text[] = {"Start", "Exit"};
 
 void process_key_main_game(int key, struct PlayerSettings *player) {
   switch (key) {
@@ -79,27 +75,28 @@ int main(void) {
       GetBackgroundScale(settings.screen_width, background.texture.width);
   // end of background initialization
 
-  //Menu initialization
+  // Menu initialization
   menu.title_fz = 30;
   menu.title_text = "Hello, Space Invaders!";
   menu.title_pos_y = 400;
-  menu.title_pos_x = CalculateXPos(menu.title_text, settings.screen_width, menu.title_fz);
+  menu.title_pos_x =
+      CalculateXPos(menu.title_text, settings.screen_width, menu.title_fz);
 
   menu.position_step_y = 8;
   menu.focus = 0;
   menu.btn_fsz = 20;
-  
-
 
   for (int i = 0; i < 2; i++) {
-  buttons[i].text = btn_text[i];
-  buttons[i].step = menu.position_step_y + i + 1;
-  buttons[i].x_pos = CalculateXPos(buttons[i].text, settings.screen_width, menu.btn_fsz);
-    buttons[i].y_pos = CalculateYPos(settings.screen_height, menu.position_step_y);
-  buttons[i].y_pos = 500;
-  buttons[i].is_focused = !i;
+    buttons[i].text = btn_text[i];
+    buttons[i].step = menu.position_step_y + i + 1;
+    buttons[i].x_pos =
+        CalculateXPos(buttons[i].text, settings.screen_width, menu.btn_fsz);
+    buttons[i].y_pos =
+        CalculateYPos(settings.screen_height, menu.position_step_y);
+    buttons[i].y_pos = 500;
+    buttons[i].is_focused = !i;
   };
-  //End of menu initialization
+  // End of menu initialization
 
   Texture2D spaceship_idle = LoadTexture(
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
@@ -115,6 +112,7 @@ int main(void) {
       "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_03_png_processed.png");
   Texture2D projectile = LoadTexture(
       "./assets/PixelSpaceRage/128px/Laser_Large_png_processed.png");
+
   // Player rectangles and vector
   Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
   Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
@@ -135,7 +133,7 @@ int main(void) {
   };
   int bullet_counter = 5;
 
- while (!settings.should_close && !WindowShouldClose()) {
+  while (!settings.should_close && !WindowShouldClose()) {
     if (!settings.is_paused)
       CalculateBackgroundPosition(&background);
 
