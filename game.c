@@ -25,6 +25,8 @@ int GameProcessShooting(PlayerSettings *player, int bullet_counter,
                         int max_bullets) {
   player->bullets[bullet_counter - 1].pos.y = player->position.y - 70.0f;
   player->bullets[bullet_counter - 1].pos.x = player->position.x;
+  player->bullets[bullet_counter - 1].collider.x = player->position.x;
+  player->bullets[bullet_counter - 1].collider.y = player->position.y - 70.0f;
 
   if (bullet_counter == 1) {
     return max_bullets;
@@ -41,6 +43,8 @@ void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets,
                      // bounds
       player->bullets[i].pos.y = player->position.y;
       player->bullets[i].pos.x = player->position.x;
+      player->bullets[i].collider.x = player->position.x;
+      player->bullets[i].collider.y = player->position.y;
       player->bullets[i].acceleration = 0.0f;
     };
 
@@ -49,5 +53,6 @@ void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets,
     };
 
     player->bullets[i].pos.y -= player->bullets[i].acceleration;
+    player->bullets[i].collider.y = player->bullets[i].pos.y;
   };
 };

@@ -17,6 +17,7 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #endif
 
 PlayerSettings player;
+Rectangle playerArea;
 GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
@@ -101,8 +102,25 @@ int main(void) {
     player.bullets[i].acceleration = 0.0f;
     player.bullets[i].pos.x = (float)settings.screen_width / 2;
     player.bullets[i].pos.y = 700;
+    player.bullets[i].collider.x = player.bullets[i].pos.x;
+    player.bullets[i].collider.y = player.bullets[i].pos.y;
+    player.bullets[i].collider.width = projectile.width;
+    player.bullets[i].collider.height = projectile.height;
   };
   int bullet_counter = max_bullets;
+
+  playerArea.y = player.position.y - 30;
+  playerArea.x = player.position.x - 15;
+  playerArea.height = spaceship_idle.height;
+  playerArea.width = (float)spaceship_idle.width / 2;
+
+  Rectangle enemy;
+  enemy.x = 516;
+  enemy.y = 150;
+  enemy.height = 50;
+  enemy.width = 100;
+
+  int enemy_health = 100;
 
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
@@ -114,10 +132,6 @@ int main(void) {
     DrawBackground(&background);
     if (settings.is_paused)
       DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
-
-    DrawText(TextFormat("Delta = %f", delta), 200, 200, 15, RAYWHITE);
-    DrawText(TextFormat("Decc = %f", player.decceleration_speed), 200, 250, 15, RAYWHITE);
-    DrawText(TextFormat("Acc = %f", player.acceleration_speed), 200, 300, 15, RAYWHITE);
 
     // MAIN MENU
     if (settings.mode == MENU) {
@@ -136,8 +150,10 @@ int main(void) {
     if (settings.mode == GAME) {
       if (IsKeyPressed(KEY_P))
         settings.is_paused = !settings.is_paused;
-      if (!settings.is_paused)
+      if (!settings.is_paused) {
         player.position.x += player.acceleration * delta;
+        playerArea.x = player.position.x - 15;
+      };
       if (player.position.x < 0)
         player.position.x = settings.screen_width;
       if (player.position.x > settings.screen_width)
@@ -157,6 +173,10 @@ int main(void) {
       //
 
       // Draw Player
+      DrawRectangle(playerArea.x, playerArea.y, playerArea.width,
+                    playerArea.height, GREEN);
+      DrawRectangle(enemy.x, enemy.y, enemy.width, enemy.height, BLUE);
+      DrawText(TextFormat("Enemy health - %d", enemy_health), 50, 50, 25, RAYWHITE);
       if (player.acceleration > 70.0f || player.acceleration < -70.0f) {
         DrawTexturePro(player.acceleration > 0 ? spaceship_turn_right_2
                                                : spaceship_turn_left_2,
@@ -172,18 +192,31 @@ int main(void) {
       // end of draw player
       //
       // Draw Projectiles
-      GameCalculateBullets(&player, 20.0f, max_bullets, settings.screen_height);
-      if (IsKeyPressed(KEY_SPACE)) {
-        bullet_counter = GameProcessShooting(&player, bullet_counter, max_bullets);
+      if (!settings.is_paused) {
+        GameCalculateBullets(&player, 20.0f, max_bullets,
+                             settings.screen_height);
+        for (int i = 0; i < max_bullets; i++) {
+        if (CheckCollisionRecs(enemy, player.bullets[i].collider)) {
+            enemy_health -= 1;
+          };
+        };
+      };
+      if (IsKeyPressed(KEY_SPACE) && !settings.is_paused) {
+        bullet_counter =
+            GameProcessShooting(&player, bullet_counter, max_bullets);
       };
 
       for (int i = 0; i < max_bullets; i++) {
-        if (player.bullets[i].pos.y < player.position.y)
+        if (player.bullets[i].pos.y < player.position.y) {
           DrawTextureEx(projectile, player.bullets[i].pos, 0.0f, 1.0f, WHITE);
+
+          // temp, draw collision areas only for testing
+          DrawRectangle(player.bullets[i].collider.x,
+                        player.bullets[i].collider.y,
+                        player.bullets[i].collider.width,
+                        player.bullets[i].collider.height, RED);
+        };
       };
-      DrawText(TextFormat("Ammo %d", bullet_counter),
-               settings.screen_width - 60, settings.screen_height - 30, 15,
-               RAYWHITE);
       //
 
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {

@@ -5,6 +5,7 @@
 
 typedef struct {
   struct Vector2 pos;
+  Rectangle collider;
   float acceleration;
 } Projectile;
 
