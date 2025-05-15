@@ -18,6 +18,7 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 PlayerSettings player;
 Rectangle playerArea;
+Enemy enemies[16];
 GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
@@ -114,14 +115,20 @@ int main(void) {
   playerArea.height = spaceship_idle.height;
   playerArea.width = (float)spaceship_idle.width / 2;
 
-  Rectangle enemy;
-  enemy.x = 516;
-  enemy.y = 150;
-  enemy.height = 50;
-  enemy.width = 100;
+  for (int i = 0; i < 16; i++) {
+    enemies[i].pos.x = 0;
+    enemies[i].pos.y = 0;
 
-  int enemy_health = 100;
+    enemies[i].collider.x = 0;
+    enemies[i].collider.y = 0;
+    enemies[i].collider.width = 20;
+    enemies[i].collider.height = 20;
 
+    enemies[i].bullet.x = 0;
+    enemies[i].bullet.y = 0;
+    enemies[i].bullet.height = 20;
+    enemies[i].bullet.width = 20;
+  };
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
@@ -163,7 +170,8 @@ int main(void) {
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MENU;
       };
-
+      
+      
       // Draw Metrics, just for development
       DrawText(
           TextFormat("X = %f, Y = %f", player.position.x, player.position.y),
@@ -175,8 +183,6 @@ int main(void) {
       // Draw Player
       DrawRectangle(playerArea.x, playerArea.y, playerArea.width,
                     playerArea.height, GREEN);
-      DrawRectangle(enemy.x, enemy.y, enemy.width, enemy.height, BLUE);
-      DrawText(TextFormat("Enemy health - %d", enemy_health), 50, 50, 25, RAYWHITE);
       if (player.acceleration > 70.0f || player.acceleration < -70.0f) {
         DrawTexturePro(player.acceleration > 0 ? spaceship_turn_right_2
                                                : spaceship_turn_left_2,
@@ -196,9 +202,6 @@ int main(void) {
         GameCalculateBullets(&player, 20.0f, max_bullets,
                              settings.screen_height);
         for (int i = 0; i < max_bullets; i++) {
-        if (CheckCollisionRecs(enemy, player.bullets[i].collider)) {
-            enemy_health -= 1;
-          };
         };
       };
       if (IsKeyPressed(KEY_SPACE) && !settings.is_paused) {

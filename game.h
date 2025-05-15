@@ -10,6 +10,12 @@ typedef struct {
 } Projectile;
 
 typedef struct {
+  Vector2 pos;
+  Rectangle collider;
+  Rectangle bullet;
+} Enemy;
+
+typedef struct {
   Rectangle position;
   float acceleration;
   float acceleration_speed;
@@ -20,7 +26,9 @@ typedef struct {
 } PlayerSettings;
 
 void GameProcessKeyMovement(int key, PlayerSettings *player);
-int GameProcessShooting(PlayerSettings *player, int bullet_counter, int max_bullets);
-void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets, int s_height); 
+int GameProcessShooting(PlayerSettings *player, int bullet_counter,
+                        int max_bullets);
+void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets,
+                          int s_height);
 
 #endif
