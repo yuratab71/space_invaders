@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <stdbool.h>
 
 #ifndef GAME_H_
 #define GAME_H_
@@ -6,13 +7,12 @@
 typedef struct {
   struct Vector2 pos;
   Rectangle collider;
-  float acceleration;
 } Projectile;
 
 typedef struct {
-  Vector2 pos;
   Rectangle collider;
   Rectangle bullet;
+  bool is_alive;
 } Enemy;
 
 typedef struct {
@@ -21,14 +21,13 @@ typedef struct {
   float acceleration_speed;
   float decceleration_speed;
   float max_acceleration;
-  Projectile bullets[8];
+  Projectile bullet;
   int health;
+  bool can_shoot;
 } PlayerSettings;
 
 void GameProcessKeyMovement(int key, PlayerSettings *player);
-int GameProcessShooting(PlayerSettings *player, int bullet_counter,
-                        int max_bullets);
-void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets,
-                          int s_height);
+void GameProcessShooting(PlayerSettings *player);
+void GameCalculateBullets(PlayerSettings *player, float delta);
 
 #endif

@@ -1,5 +1,6 @@
 #include "game.h"
 #include "raylib.h"
+#include <stdbool.h>
 
 void GameProcessKeyMovement(int key, PlayerSettings *player) {
   switch (key) {
@@ -21,38 +22,28 @@ void GameProcessKeyMovement(int key, PlayerSettings *player) {
   return;
 };
 
-int GameProcessShooting(PlayerSettings *player, int bullet_counter,
-                        int max_bullets) {
-  player->bullets[bullet_counter - 1].pos.y = player->position.y - 70.0f;
-  player->bullets[bullet_counter - 1].pos.x = player->position.x;
-  player->bullets[bullet_counter - 1].collider.x = player->position.x;
-  player->bullets[bullet_counter - 1].collider.y = player->position.y - 70.0f;
-
-  if (bullet_counter == 1) {
-    return max_bullets;
-  };
-
-  return bullet_counter -= 1;
+void GameProcessShooting(PlayerSettings *player) {
+  player->bullet.pos.y = player->position.y - 70.0f;
+  player->bullet.pos.x = player->position.x;
+  player->bullet.collider.x = player->position.x;
+  player->bullet.collider.y = player->position.y - 70.0f;
+  player->can_shoot = false;
+  return;
 };
 
-void GameCalculateBullets(PlayerSettings *player, float acc, int max_bullets,
-                          int s_height) {
-  for (int i = 0; i < max_bullets; i++) {
-    if (player->bullets[i].pos.y <
-        -s_height) { // set bullets to init points after reaching the out of
-                     // bounds
-      player->bullets[i].pos.y = player->position.y;
-      player->bullets[i].pos.x = player->position.x;
-      player->bullets[i].collider.x = player->position.x;
-      player->bullets[i].collider.y = player->position.y;
-      player->bullets[i].acceleration = 0.0f;
-    };
-
-    if (player->bullets[i].pos.y < player->position.y) {
-      player->bullets[i].acceleration += acc * GetFrameTime();
-    };
-
-    player->bullets[i].pos.y -= player->bullets[i].acceleration;
-    player->bullets[i].collider.y = player->bullets[i].pos.y;
+void GameCalculateBullets(PlayerSettings *player, float delta) {
+  if (player->bullet.pos.y < 0.0f) { // set bullets to init points after
+                                          // reaching the out of bounds
+    player->bullet.pos.y = player->position.y;
+    player->bullet.pos.x = player->position.x;
+    player->bullet.collider.x = player->position.x;
+    player->bullet.collider.y = player->position.y;
+    player->can_shoot = true;
   };
+  if (player->bullet.pos.y < player->position.y) {
+    player->bullet.pos.y -= 450.0f * delta;
+  };
+
+  player->bullet.collider.y = player->bullet.pos.y;
+  return;
 };

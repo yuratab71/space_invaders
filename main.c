@@ -4,6 +4,7 @@
 #include "main_menu.h"
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,9 +17,24 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 #endif
 
+enum EnemyMovement { LEFT, RIGHT, DOWN };
+
+const char *name_enemy_movement(enum EnemyMovement enemy_movement) {
+  switch (enemy_movement) {
+  case LEFT:
+    return "LEFT";
+  case RIGHT:
+    return "RIGHT";
+  case DOWN:
+    return "DOWN";
+  default:
+    return "UNKNOWN";
+  };
+};
+
 PlayerSettings player;
 Rectangle playerArea;
-Enemy enemies[16];
+Enemy enemies[4][4];
 GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
@@ -98,37 +114,56 @@ int main(void) {
   player.acceleration_speed = 100.0f;
   player.decceleration_speed = 120.0f;
   player.max_acceleration = 270.0f;
-  int max_bullets = 8;
-  for (int i = 0; i < max_bullets; i++) {
-    player.bullets[i].acceleration = 0.0f;
-    player.bullets[i].pos.x = (float)settings.screen_width / 2;
-    player.bullets[i].pos.y = 700;
-    player.bullets[i].collider.x = player.bullets[i].pos.x;
-    player.bullets[i].collider.y = player.bullets[i].pos.y;
-    player.bullets[i].collider.width = projectile.width;
-    player.bullets[i].collider.height = projectile.height;
-  };
-  int bullet_counter = max_bullets;
+  player.can_shoot = true;
+  player.bullet.pos.x = player.position.x;
+  player.bullet.pos.y = 700;
+  player.bullet.collider.x = player.bullet.pos.x;
+  player.bullet.collider.y = player.bullet.pos.y;
+  player.bullet.collider.width = projectile.width;
+  player.bullet.collider.height = projectile.height;
 
   playerArea.y = player.position.y - 30;
   playerArea.x = player.position.x - 15;
   playerArea.height = spaceship_idle.height;
   playerArea.width = (float)spaceship_idle.width / 2;
 
-  for (int i = 0; i < 16; i++) {
-    enemies[i].pos.x = 0;
-    enemies[i].pos.y = 0;
+  Texture2D enemy_red_txtr = LoadTexture(
+      "./assets/PixelSpaceRage/128px/Enemy01_Red_Frame_2_png_processed.png");
+  Texture2D enemy_green_txtr = LoadTexture(
+      "./assets/PixelSpaceRage/128px/Enemy01_Green_Frame_1_png_processed.png");
+  Texture2D enemy_teal_txtr = LoadTexture(
+      "./assets/PixelSpaceRage/128px/Enemy01_Teal_Frame_1_png_processed.png");
+  Texture2D enemy_red_small_txtr = LoadTexture(
+      "./assets/PixelSpaceRage/128px/Enemy02Red_Frame_1_png_processed.png");
 
-    enemies[i].collider.x = 0;
-    enemies[i].collider.y = 0;
-    enemies[i].collider.width = 20;
-    enemies[i].collider.height = 20;
+  float enemy_move_timer = 120.0f;
+  int enemy_move_counter = 2;
+  int enemy_move_dir_prev = LEFT;
+  int enemy_move_direction = LEFT;
+  float enemy_move_step = 40.0f;
+  int enemy_start_pos_x = (int)settings.screen_width / 2 - 2 * 80;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      enemies[i][j].collider.x = enemy_start_pos_x + j * 80;
+      enemies[i][j].collider.y = 50 + i * 50;
+      enemies[i][j].collider.width = 50;
+      enemies[i][j].collider.height = 40;
 
-    enemies[i].bullet.x = 0;
-    enemies[i].bullet.y = 0;
-    enemies[i].bullet.height = 20;
-    enemies[i].bullet.width = 20;
+      enemies[i][j].bullet.x = 0;
+      enemies[i][j].bullet.y = 0;
+      enemies[i][j].bullet.height = 20;
+      enemies[i][j].bullet.width = 20;
+
+      enemies[i][j].is_alive = true;
+    };
   };
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      printf("Enemie no. %d : %d, x = %f, y = %f \n", i, j,
+             enemies[i][j].collider.x, enemies[i][j].collider.y);
+    };
+  };
+
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
@@ -160,6 +195,49 @@ int main(void) {
       if (!settings.is_paused) {
         player.position.x += player.acceleration * delta;
         playerArea.x = player.position.x - 15;
+        enemy_move_timer -= 1.0f;
+        if (enemy_move_timer < 1.0f) {
+          if (enemy_move_counter == 0 &&
+              (enemy_move_direction == LEFT || enemy_move_direction == RIGHT)) {
+            enemy_move_dir_prev = enemy_move_direction;
+            enemy_move_direction = DOWN;
+          }
+          switch (enemy_move_direction) {
+          case LEFT:
+            for (int i = 0; i < 4; i++) {
+              for (int j = 0; j < 4; j++) {
+                enemies[i][j].collider.x -= enemy_move_step;
+              };
+            };
+            enemy_move_counter -= 1;
+            enemy_move_timer = 120.0f;
+            break;
+          case RIGHT:
+            for (int i = 0; i < 4; i++) {
+              for (int j = 0; j < 4; j++) {
+                enemies[i][j].collider.x += enemy_move_step;
+              };
+            };
+            enemy_move_counter -= 1;
+            enemy_move_timer = 120.0f;
+            break;
+          case DOWN:
+            for (int i = 0; i < 4; i++) {
+              for (int j = 0; j < 4; j++) {
+                enemies[i][j].collider.y += enemy_move_step;
+              };
+            };
+            enemy_move_counter = 5;
+            if (enemy_move_dir_prev == LEFT)
+              enemy_move_direction = RIGHT;
+            if (enemy_move_dir_prev == RIGHT)
+              enemy_move_direction = LEFT;
+            enemy_move_timer = 120.0f;
+            break;
+          default:
+            break;
+          };
+        };
       };
       if (player.position.x < 0)
         player.position.x = settings.screen_width;
@@ -170,14 +248,22 @@ int main(void) {
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MENU;
       };
-      
-      
+
       // Draw Metrics, just for development
       DrawText(
           TextFormat("X = %f, Y = %f", player.position.x, player.position.y),
           settings.screen_width - 300, 20, 15, RAYWHITE);
       DrawText(TextFormat("Acc = %f", player.acceleration),
                settings.screen_width - 300, 40, 15, RAYWHITE);
+      DrawText(TextFormat("Move counter = %d", enemy_move_counter),
+               settings.screen_width - 300, 60, 15, RAYWHITE);
+      DrawText(TextFormat("Direction = %s",
+                          name_enemy_movement(enemy_move_direction)),
+               settings.screen_width - 300, 80, 15, RAYWHITE);
+      DrawText(TextFormat("Direction = %s",
+                          name_enemy_movement(enemy_move_dir_prev)),
+               settings.screen_width - 300, 100, 15, RAYWHITE);
+      DrawText(TextFormat("Bullet x = %f, y = %f", player.bullet.pos.x, player.bullet.pos.y), settings.screen_width - 300, 120, 15, RAYWHITE);
       //
 
       // Draw Player
@@ -199,29 +285,35 @@ int main(void) {
       //
       // Draw Projectiles
       if (!settings.is_paused) {
-        GameCalculateBullets(&player, 20.0f, max_bullets,
-                             settings.screen_height);
-        for (int i = 0; i < max_bullets; i++) {
-        };
-      };
-      if (IsKeyPressed(KEY_SPACE) && !settings.is_paused) {
-        bullet_counter =
-            GameProcessShooting(&player, bullet_counter, max_bullets);
+        GameCalculateBullets(&player, delta);
       };
 
-      for (int i = 0; i < max_bullets; i++) {
-        if (player.bullets[i].pos.y < player.position.y) {
-          DrawTextureEx(projectile, player.bullets[i].pos, 0.0f, 1.0f, WHITE);
-
-          // temp, draw collision areas only for testing
-          DrawRectangle(player.bullets[i].collider.x,
-                        player.bullets[i].collider.y,
-                        player.bullets[i].collider.width,
-                        player.bullets[i].collider.height, RED);
-        };
+      if (IsKeyPressed(KEY_SPACE) && !settings.is_paused && player.can_shoot) {
+        GameProcessShooting(&player);
       };
+
+        if (player.bullet.pos.y < player.position.y) {
+          DrawTextureEx(projectile, player.bullet.pos, 0.0f, 1.0f, WHITE);
+        };
       //
 
+      // Draw Enemies
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          if (enemies[i][j].is_alive) {
+            DrawRectangle(enemies[i][j].collider.x, enemies[i][j].collider.y,
+                          enemies[i][j].collider.width,
+                          enemies[i][j].collider.height, RAYWHITE);
+            DrawTextureEx(
+                enemy_red_txtr,
+                (Vector2){enemies[i][j].collider.x, enemies[i][j].collider.y},
+                0.0f, 1.0f, WHITE);
+          };
+        };
+      };
+      // End of Draw enemies
+      //
+      //
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
         GameProcessKeyMovement(KEY_LEFT, &player);
       } else {
@@ -247,13 +339,17 @@ int main(void) {
     };
     // END OF ACTUAL GAME
     EndDrawing();
-  }
+  };
   UnloadTexture(background.texture);
   UnloadTexture(spaceship_idle);
   UnloadTexture(spaceship_turn_left_1);
   UnloadTexture(spaceship_turn_left_2);
   UnloadTexture(spaceship_turn_right_1);
   UnloadTexture(spaceship_turn_right_2);
+  UnloadTexture(enemy_green_txtr);
+  UnloadTexture(enemy_red_small_txtr);
+  UnloadTexture(enemy_red_txtr);
+  UnloadTexture(enemy_teal_txtr);
   UnloadTexture(projectile);
   CloseWindow();
   return 0;
