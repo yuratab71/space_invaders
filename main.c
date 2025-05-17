@@ -19,19 +19,6 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 enum EnemyMovement { LEFT, RIGHT, DOWN };
 
-const char *name_enemy_movement(enum EnemyMovement enemy_movement) {
-  switch (enemy_movement) {
-  case LEFT:
-    return "LEFT";
-  case RIGHT:
-    return "RIGHT";
-  case DOWN:
-    return "DOWN";
-  default:
-    return "UNKNOWN";
-  };
-};
-
 PlayerSettings player;
 Rectangle playerArea;
 Enemy enemies[4][4];
@@ -100,7 +87,7 @@ int main(void) {
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
-    if (!settings.is_paused && true)
+    if (!settings.is_paused)
       BackgrounfCalculatePosition(&background);
 
     BeginDrawing();
@@ -234,8 +221,6 @@ int main(void) {
         settings.is_paused = !settings.is_paused;
     };
     // INPUT END
-    //
-    //
     //
     // END OF ACTUAL GAME
     EndDrawing();
