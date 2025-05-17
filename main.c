@@ -68,7 +68,7 @@ int main(void) {
 
   // Menu initialization
   MenuInit(&menu, &settings);
-  ButtonsInit(buttons, &settings, &menu);
+  MenuInitButtons(buttons, &settings, &menu);
   // End of menu initialization
 
   Texture2D spaceship_idle = LoadTexture(

@@ -1,5 +1,5 @@
-#include <stdbool.h>
 #include "global_settings.h"
+#include <stdbool.h>
 
 #ifndef MAIN_MENU_H_
 #define MAIN_MENU_H_
@@ -30,14 +30,14 @@ typedef struct {
   int focus;
 } MenuSettings;
 
-void MenuInit(MenuSettings* menu, GlobalSettings *settings);
-void ButtonsInit(Btn btn[], GlobalSettings *settings, MenuSettings *menu);
+void MenuInit(MenuSettings *menu, GlobalSettings *settings);
+void MenuInitButtons(Btn btn[], GlobalSettings *settings, MenuSettings *menu);
 
-int CalculateXPos(char* text, int s_width, int fsz);
-int CalculateYPos(int s_height, int step);
+int MenuCalculateXPos(char *text, int s_width, int fsz);
+int MenuCalculateYPos(int s_height, int step);
 
-void MenuDrawTitle(MenuSettings* menu);
-void MenuDrawButtons(MenuSettings* menu, Btn btn[]);
+void MenuDrawTitle(MenuSettings *menu);
+void MenuDrawButtons(MenuSettings *menu, Btn btn[]);
 
-void MenuProcessKey(int key, MenuSettings* menu, GlobalSettings* stn);
+void MenuProcessKey(int key, MenuSettings *menu, GlobalSettings *stn);
 #endif
