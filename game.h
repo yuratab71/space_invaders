@@ -1,3 +1,4 @@
+#include "global_settings.h"
 #include "raylib.h"
 #include <stdbool.h>
 
@@ -24,12 +25,23 @@ typedef struct {
   Projectile bullet;
   int health;
   bool can_shoot;
+  Texture2D idle;
+  Texture2D right_1;
+  Texture2D right_2;
+  Texture2D left_1;
+  Texture2D left_2;
+  Texture2D projectile;
 } PlayerSettings;
 
-typedef struct {} Enemie;
+typedef struct {
+} Enemie;
 
+void GameLoadPlayerTextures(PlayerSettings *player);
+void GameUnloadPlayerTextures(PlayerSettings *player);
+void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings);
 void GameProcessKeyMovement(int key, PlayerSettings *player);
 void GameProcessShooting(PlayerSettings *player);
 void GameCalculateBullets(PlayerSettings *player, float delta);
-
+void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin);
+void GameDrawPlayerBullet(PlayerSettings *player);
 #endif

@@ -39,78 +39,31 @@ GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
-
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
 int main(void) {
-
   if (NvOptimusEnablement && AmdPowerXpressRequestHighPerformance) {
     printf("[GAME]: Use dedicated GPU enabled");
   };
-  settings.screen_width = 1024;
-  settings.screen_height = 720;
-  settings.should_close = false;
-  settings.mode = MENU;
-  settings.is_paused = false;
 
+  SettingsInit(&settings);
   InitWindow(settings.screen_width, settings.screen_height, title);
   SetWindowState(FLAG_VSYNC_HINT);
-
-  // Background initialization
-  background.texture = LoadTexture(
-      "./assets/PixelSpaceRage/PixelBackgroundSeamlessVertically.png");
-  background.y_pos = 0.0f;
-  background.scroll_speed = 0.5f;
-  background.scale =
-      GetBackgroundScale(settings.screen_width, background.texture.width);
-  // end of background initialization
-
-  // Menu initialization
+  BackgroundLoadTexture(&background);
+  BackgroundInit(&background, &settings);
   MenuInit(&menu, &settings);
   MenuInitButtons(buttons, &settings, &menu);
-  // End of menu initialization
-
-  Texture2D spaceship_idle = LoadTexture(
-      "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_01_png_processed.png");
-  Texture2D spaceship_turn_right_1 =
-      LoadTexture("./assets/PixelSpaceRage/128px/"
-                  "PlayerBlue_Frame_02_png_processed_flipped.png");
-  Texture2D spaceship_turn_right_2 =
-      LoadTexture("./assets/PixelSpaceRage/128px/"
-                  "PlayerBlue_Frame_03_png_processed_flipped.png");
-  Texture2D spaceship_turn_left_1 = LoadTexture(
-      "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_02_png_processed.png");
-  Texture2D spaceship_turn_left_2 = LoadTexture(
-      "./assets/PixelSpaceRage/128px/PlayerBlue_Frame_03_png_processed.png");
-  Texture2D projectile = LoadTexture(
-      "./assets/PixelSpaceRage/128px/Laser_Large_png_processed.png");
-
-  // Player rectangles and vector
-  Vector2 origin = {spaceship_idle.width / 2.0f, spaceship_idle.height / 2.0f};
-  Rectangle sourceRec = {0, 0, spaceship_idle.width, spaceship_idle.height};
-
-  player.position.x = (float)settings.screen_width / 2;
-  player.position.y = settings.screen_height - 70;
-  player.position.width = spaceship_idle.width;
-  player.position.height = spaceship_idle.height;
-  player.health = 100;
-  player.acceleration = 0.0f;
-  player.acceleration_speed = 100.0f;
-  player.decceleration_speed = 120.0f;
-  player.max_acceleration = 270.0f;
-  player.can_shoot = true;
-  player.bullet.pos.x = player.position.x;
-  player.bullet.pos.y = 700;
-  player.bullet.collider.x = player.bullet.pos.x;
-  player.bullet.collider.y = player.bullet.pos.y;
-  player.bullet.collider.width = projectile.width;
-  player.bullet.collider.height = projectile.height;
+  GameLoadPlayerTextures(&player);
+  GameInitPlayer(&player, &settings);
 
   playerArea.y = player.position.y - 30;
   playerArea.x = player.position.x - 15;
-  playerArea.height = spaceship_idle.height;
-  playerArea.width = (float)spaceship_idle.width / 2;
+  playerArea.height = player.idle.height;
+  playerArea.width = (float)player.idle.width / 2;
+
+  Vector2 origin = {player.idle.width / 2.0f, player.idle.height / 2.0f};
+  Rectangle sourceRec = {0, 0, player.idle.width, player.idle.height};
 
   Texture2D enemy_red_txtr = LoadTexture(
       "./assets/PixelSpaceRage/128px/Enemy01_Red_Frame_2_png_processed.png");
@@ -147,12 +100,12 @@ int main(void) {
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
-    if (!settings.is_paused)
-      CalculateBackgroundPosition(&background);
+    if (!settings.is_paused && true)
+      BackgrounfCalculatePosition(&background);
 
     BeginDrawing();
     ClearBackground(BLACK);
-    DrawBackground(&background);
+    BackgroundDrawSelf(&background);
     // MAIN MENU
     if (settings.mode == MENU) {
       MenuDrawTitle(&menu);
@@ -170,10 +123,8 @@ int main(void) {
     if (settings.mode == GAME) {
       if (settings.is_paused)
         DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
-
-      if (IsKeyPressed(KEY_P))
-        settings.is_paused = !settings.is_paused;
       if (!settings.is_paused) {
+        GameCalculateBullets(&player, delta);
         player.position.x += player.acceleration * delta;
         playerArea.x = player.position.x - 15;
         enemy_move_timer -= 1.0f;
@@ -225,60 +176,12 @@ int main(void) {
       if (player.position.x > settings.screen_width)
         player.position.x = 0;
 
-      DrawText("Press Backspace to Leave", 20, 20, 10, RAYWHITE);
-      if (IsKeyReleased(KEY_BACKSPACE)) {
-        settings.mode = MENU;
-      };
-
-      // Draw Metrics, just for development
-      DrawText(
-          TextFormat("X = %f, Y = %f", player.position.x, player.position.y),
-          settings.screen_width - 300, 20, 15, RAYWHITE);
-      DrawText(TextFormat("Acc = %f", player.acceleration),
-               settings.screen_width - 300, 40, 15, RAYWHITE);
-      DrawText(TextFormat("Move counter = %d", enemy_move_counter),
-               settings.screen_width - 300, 60, 15, RAYWHITE);
-      DrawText(TextFormat("Direction = %s",
-                          name_enemy_movement(enemy_move_direction)),
-               settings.screen_width - 300, 80, 15, RAYWHITE);
-      DrawText(TextFormat("Direction = %s",
-                          name_enemy_movement(enemy_move_dir_prev)),
-               settings.screen_width - 300, 100, 15, RAYWHITE);
-      DrawText(TextFormat("Bullet x = %f, y = %f", player.bullet.pos.x,
-                          player.bullet.pos.y),
-               settings.screen_width - 300, 120, 15, RAYWHITE);
+      // DRAWING SECTION
       //
-
-      // Draw Player
       DrawRectangle(playerArea.x, playerArea.y, playerArea.width,
                     playerArea.height, GREEN);
-      if (player.acceleration > 70.0f || player.acceleration < -70.0f) {
-        DrawTexturePro(player.acceleration > 0 ? spaceship_turn_right_2
-                                               : spaceship_turn_left_2,
-                       sourceRec, player.position, origin, 0.0f, WHITE);
-      } else if (player.acceleration > 30.0f || player.acceleration < -30.0f) {
-        DrawTexturePro(player.acceleration > 0 ? spaceship_turn_right_1
-                                               : spaceship_turn_left_1,
-                       sourceRec, player.position, origin, 0.0f, WHITE);
-      } else {
-        DrawTexturePro(spaceship_idle, sourceRec, player.position, origin, 0.0f,
-                       WHITE);
-      };
-      // end of draw player
-      //
-      // Draw Projectiles
-      if (!settings.is_paused) {
-        GameCalculateBullets(&player, delta);
-      };
-
-      if (IsKeyPressed(KEY_SPACE) && !settings.is_paused && player.can_shoot) {
-        GameProcessShooting(&player);
-      };
-
-      if (player.bullet.pos.y < player.position.y) {
-        DrawTextureEx(projectile, player.bullet.pos, 0.0f, 1.0f, WHITE);
-      };
-      //
+      GameDrawPlayer(&player, sourceRec, origin);
+      GameDrawPlayerBullet(&player);
 
       // Draw Enemies
       for (int i = 0; i < 4; i++) {
@@ -296,7 +199,15 @@ int main(void) {
       };
       // End of Draw enemies
       //
-      //
+      // INPUT SECTION
+      if (IsKeyReleased(KEY_BACKSPACE)) {
+        settings.mode = MENU;
+      };
+
+      if (IsKeyPressed(KEY_SPACE) && !settings.is_paused && player.can_shoot) {
+        GameProcessShooting(&player);
+      };
+
       if (IsKeyDown(KEY_LEFT) && !settings.is_paused) {
         GameProcessKeyMovement(KEY_LEFT, &player);
       } else {
@@ -319,21 +230,22 @@ int main(void) {
           };
         };
       };
+      if (IsKeyPressed(KEY_P))
+        settings.is_paused = !settings.is_paused;
     };
+    // INPUT END
+    //
+    //
+    //
     // END OF ACTUAL GAME
     EndDrawing();
   };
-  UnloadTexture(background.texture);
-  UnloadTexture(spaceship_idle);
-  UnloadTexture(spaceship_turn_left_1);
-  UnloadTexture(spaceship_turn_left_2);
-  UnloadTexture(spaceship_turn_right_1);
-  UnloadTexture(spaceship_turn_right_2);
+  BackgroundUnloadTexture(&background);
+  GameUnloadPlayerTextures(&player);
   UnloadTexture(enemy_green_txtr);
   UnloadTexture(enemy_red_small_txtr);
   UnloadTexture(enemy_red_txtr);
   UnloadTexture(enemy_teal_txtr);
-  UnloadTexture(projectile);
   CloseWindow();
   return 0;
 }

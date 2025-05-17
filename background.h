@@ -1,3 +1,4 @@
+#include "global_settings.h"
 #include "raylib.h"
 #include <stdbool.h>
 
@@ -11,10 +12,11 @@ typedef struct {
   Texture2D texture;
 } BackgroundSettings;
 
-float GetBackgroundScale(int s_width, int b_width);
-
-void CalculateBackgroundPosition(BackgroundSettings* bstn);
-
-void DrawBackground(BackgroundSettings* bstn);
+void BackgroundLoadTexture(BackgroundSettings *background);
+void BackgroundUnloadTexture(BackgroundSettings *background);
+void BackgroundInit(BackgroundSettings *background, GlobalSettings *settings);
+float BackgroundGetScale(int s_width, int b_width);
+void BackgrounfCalculatePosition(BackgroundSettings *bstn);
+void BackgroundDrawSelf(BackgroundSettings *bstn);
 
 #endif

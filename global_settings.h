@@ -13,4 +13,6 @@ typedef struct {
   bool is_paused;
 } GlobalSettings;
 
+void SettingsInit(GlobalSettings *settings);
+
 #endif
