@@ -92,6 +92,20 @@ void GameCalculateBullets(PlayerSettings *player, float delta) {
   return;
 };
 
+void GameCalculatePlayer(PlayerSettings *player, float delta) {
+  player->position.x += player->acceleration * delta;
+  return;
+};
+
+void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy) {
+  if (enemy->is_alive && CheckCollisionRecs(player->bullet.collider, enemy->collider)) {
+    player->bullet.pos.x = player->position.x;
+    player->bullet.pos.y = player->position.y;
+    player->can_shoot = true;
+    enemy->is_alive = false;
+  };
+};
+
 void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin) {
   if (player->acceleration > 70.0f) {
     DrawTexturePro(player->right_2, source, player->position, origin, 0.0f,

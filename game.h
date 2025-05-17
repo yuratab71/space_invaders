@@ -42,6 +42,8 @@ void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings);
 void GameProcessKeyMovement(int key, PlayerSettings *player);
 void GameProcessShooting(PlayerSettings *player);
 void GameCalculateBullets(PlayerSettings *player, float delta);
+void GameCalculatePlayer(PlayerSettings *player, float delta);
+void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy);
 void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin);
 void GameDrawPlayerBullet(PlayerSettings *player);
 #endif
