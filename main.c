@@ -39,7 +39,6 @@ GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
-char *btn_text[] = {"Start", "Exit"};
 
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
@@ -68,26 +67,8 @@ int main(void) {
   // end of background initialization
 
   // Menu initialization
-  menu.title_fz = 30;
-  menu.title_text = "Hello, Space Invaders!";
-  menu.title_pos_y = 400;
-  menu.title_pos_x =
-      CalculateXPos(menu.title_text, settings.screen_width, menu.title_fz);
-
-  menu.position_step_y = 8;
-  menu.focus = 0;
-  menu.btn_fsz = 20;
-
-  for (int i = 0; i < 2; i++) {
-    buttons[i].text = btn_text[i];
-    buttons[i].step = menu.position_step_y + i + 1;
-    buttons[i].x_pos =
-        CalculateXPos(buttons[i].text, settings.screen_width, menu.btn_fsz);
-    buttons[i].y_pos =
-        CalculateYPos(settings.screen_height, menu.position_step_y);
-    buttons[i].y_pos = 500;
-    buttons[i].is_focused = !i;
-  };
+  MenuInit(&menu, &settings);
+  ButtonsInit(buttons, &settings, &menu);
   // End of menu initialization
 
   Texture2D spaceship_idle = LoadTexture(
@@ -140,7 +121,7 @@ int main(void) {
   Texture2D enemy_red_small_txtr = LoadTexture(
       "./assets/PixelSpaceRage/128px/Enemy02Red_Frame_1_png_processed.png");
 
-  //Enemy init
+  // Enemy init
   float enemy_move_timer = 120.0f;
   int enemy_move_counter = 2;
   int enemy_move_dir_prev = LEFT;
@@ -162,18 +143,16 @@ int main(void) {
       enemies[i][j].is_alive = true;
     };
   };
-  
+
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
     if (!settings.is_paused)
       CalculateBackgroundPosition(&background);
+
     BeginDrawing();
     ClearBackground(BLACK);
     DrawBackground(&background);
-    if (settings.is_paused)
-      DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
-
     // MAIN MENU
     if (settings.mode == MENU) {
       MenuDrawTitle(&menu);
@@ -189,6 +168,9 @@ int main(void) {
 
     // ACTUAL GAME
     if (settings.mode == GAME) {
+      if (settings.is_paused)
+        DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
+
       if (IsKeyPressed(KEY_P))
         settings.is_paused = !settings.is_paused;
       if (!settings.is_paused) {
@@ -262,7 +244,9 @@ int main(void) {
       DrawText(TextFormat("Direction = %s",
                           name_enemy_movement(enemy_move_dir_prev)),
                settings.screen_width - 300, 100, 15, RAYWHITE);
-      DrawText(TextFormat("Bullet x = %f, y = %f", player.bullet.pos.x, player.bullet.pos.y), settings.screen_width - 300, 120, 15, RAYWHITE);
+      DrawText(TextFormat("Bullet x = %f, y = %f", player.bullet.pos.x,
+                          player.bullet.pos.y),
+               settings.screen_width - 300, 120, 15, RAYWHITE);
       //
 
       // Draw Player
@@ -291,9 +275,9 @@ int main(void) {
         GameProcessShooting(&player);
       };
 
-        if (player.bullet.pos.y < player.position.y) {
-          DrawTextureEx(projectile, player.bullet.pos, 0.0f, 1.0f, WHITE);
-        };
+      if (player.bullet.pos.y < player.position.y) {
+        DrawTextureEx(projectile, player.bullet.pos, 0.0f, 1.0f, WHITE);
+      };
       //
 
       // Draw Enemies

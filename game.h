@@ -26,6 +26,8 @@ typedef struct {
   bool can_shoot;
 } PlayerSettings;
 
+typedef struct {} Enemie;
+
 void GameProcessKeyMovement(int key, PlayerSettings *player);
 void GameProcessShooting(PlayerSettings *player);
 void GameCalculateBullets(PlayerSettings *player, float delta);

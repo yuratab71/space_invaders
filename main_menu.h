@@ -30,6 +30,9 @@ typedef struct {
   int focus;
 } MenuSettings;
 
+void MenuInit(MenuSettings* menu, GlobalSettings *settings);
+void ButtonsInit(Btn btn[], GlobalSettings *settings, MenuSettings *menu);
+
 int CalculateXPos(char* text, int s_width, int fsz);
 int CalculateYPos(int s_height, int step);
 
