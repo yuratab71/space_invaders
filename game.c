@@ -92,13 +92,19 @@ void GameCalculateBullets(PlayerSettings *player, float delta) {
   return;
 };
 
-void GameCalculatePlayer(PlayerSettings *player, float delta) {
+void GameCalculatePlayer(PlayerSettings *player, float delta,
+                         GlobalSettings *settings) {
   player->position.x += player->acceleration * delta;
+  if (player->position.x < 0)
+    player->position.x = settings->screen_width;
+  if (player->position.x > settings->screen_width)
+    player->position.x = 0;
   return;
 };
 
 void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy) {
-  if (enemy->is_alive && CheckCollisionRecs(player->bullet.collider, enemy->collider)) {
+  if (enemy->is_alive &&
+      CheckCollisionRecs(player->bullet.collider, enemy->collider)) {
     player->bullet.pos.x = player->position.x;
     player->bullet.pos.y = player->position.y;
     player->can_shoot = true;

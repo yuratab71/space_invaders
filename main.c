@@ -112,7 +112,7 @@ int main(void) {
         DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
       if (!settings.is_paused) {
         GameCalculateBullets(&player, delta);
-        GameCalculatePlayer(&player, delta);
+        GameCalculatePlayer(&player, delta, &settings);
         for (int i = 0; i < 4; i++) {
           for (int j = 0; j < 4; j++) {
             GameProcessCollisionBulletOnEnemy(&player, &enemies[i][j]);
@@ -163,11 +163,6 @@ int main(void) {
           };
         };
       };
-      if (player.position.x < 0)
-        player.position.x = settings.screen_width;
-      if (player.position.x > settings.screen_width)
-        player.position.x = 0;
-
       // DRAWING SECTION
       //
       DrawRectangle(playerArea.x, playerArea.y, playerArea.width,
