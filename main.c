@@ -45,6 +45,10 @@ char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
 int main(void) {
+
+  if (NvOptimusEnablement && AmdPowerXpressRequestHighPerformance) {
+    printf("[GAME]: Use dedicated GPU enabled");
+  };
   settings.screen_width = 1024;
   settings.screen_height = 720;
   settings.should_close = false;
@@ -136,6 +140,7 @@ int main(void) {
   Texture2D enemy_red_small_txtr = LoadTexture(
       "./assets/PixelSpaceRage/128px/Enemy02Red_Frame_1_png_processed.png");
 
+  //Enemy init
   float enemy_move_timer = 120.0f;
   int enemy_move_counter = 2;
   int enemy_move_dir_prev = LEFT;
@@ -157,13 +162,7 @@ int main(void) {
       enemies[i][j].is_alive = true;
     };
   };
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      printf("Enemie no. %d : %d, x = %f, y = %f \n", i, j,
-             enemies[i][j].collider.x, enemies[i][j].collider.y);
-    };
-  };
-
+  
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
