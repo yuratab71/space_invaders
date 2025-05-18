@@ -70,9 +70,12 @@ int main(void) {
   int enemy_start_pos_x = (int)settings.screen_width / 2 - 2 * 80;
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
-      enemies[i][j].collider.x = enemy_start_pos_x + j * 80;
-      enemies[i][j].collider.y = 50 + i * 50;
-      enemies[i][j].collider.width = 50;
+      enemies[i][j].collider.x = enemy_start_pos_x + j * 80 + 15.0f;
+      enemies[i][j].collider.y = 50 + i * 50 + 10.0f;
+      enemies[i][j].pos.x = enemy_start_pos_x + j * 80;
+      enemies[i][j].pos.y = 50 + i * 50;
+
+      enemies[i][j].collider.width = 35;
       enemies[i][j].collider.height = 40;
 
       enemies[i][j].bullet.x = 0;
@@ -131,6 +134,7 @@ int main(void) {
             for (int i = 0; i < 4; i++) {
               for (int j = 0; j < 4; j++) {
                 enemies[i][j].collider.x -= enemy_move_step;
+                enemies[i][j].pos.x -= enemy_move_step;
               };
             };
             enemy_move_counter -= 1;
@@ -140,6 +144,7 @@ int main(void) {
             for (int i = 0; i < 4; i++) {
               for (int j = 0; j < 4; j++) {
                 enemies[i][j].collider.x += enemy_move_step;
+                  enemies[i][j].pos.x += enemy_move_step;
               };
             };
             enemy_move_counter -= 1;
@@ -149,6 +154,7 @@ int main(void) {
             for (int i = 0; i < 4; i++) {
               for (int j = 0; j < 4; j++) {
                 enemies[i][j].collider.y += enemy_move_step;
+                  enemies[i][j].pos.y += enemy_move_step;
               };
             };
             enemy_move_counter = 5;
@@ -174,12 +180,13 @@ int main(void) {
       for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
           if (enemies[i][j].is_alive) {
-            DrawRectangle(enemies[i][j].collider.x, enemies[i][j].collider.y,
+            DrawRectangle(enemies[i][j].collider.x,
+                          enemies[i][j].collider.y,
                           enemies[i][j].collider.width,
                           enemies[i][j].collider.height, RAYWHITE);
             DrawTextureEx(
                 enemy_red_txtr,
-                (Vector2){enemies[i][j].collider.x, enemies[i][j].collider.y},
+                (Vector2){enemies[i][j].pos.x, enemies[i][j].pos.y},
                 0.0f, 1.0f, WHITE);
           };
         };
