@@ -34,9 +34,6 @@ typedef struct {
   Texture2D projectile;
 } PlayerSettings;
 
-typedef struct {
-} Enemie;
-
 void GameLoadPlayerTextures(PlayerSettings *player);
 void GameUnloadPlayerTextures(PlayerSettings *player);
 void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings);
@@ -47,4 +44,5 @@ void GameCalculatePlayer(PlayerSettings *player, float delta, GlobalSettings *se
 void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy);
 void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin);
 void GameDrawPlayerBullet(PlayerSettings *player);
+void GameDrawEnemies(Enemy enemies[4][4], Texture2D *texture);
 #endif

@@ -143,3 +143,18 @@ void GameDrawPlayerBullet(PlayerSettings *player) {
   };
   return;
 };
+
+void GameDrawEnemies(Enemy enemies[4][4], Texture2D *texture) {
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      if (enemies[i][j].is_alive) {
+        DrawRectangle(enemies[i][j].collider.x, enemies[i][j].collider.y,
+                      enemies[i][j].collider.width,
+                      enemies[i][j].collider.height, RAYWHITE);
+        DrawTextureEx(*texture,
+                      (Vector2){enemies[i][j].pos.x, enemies[i][j].pos.y}, 0.0f,
+                      1.0f, WHITE);
+      };
+    };
+  };
+};

@@ -144,7 +144,7 @@ int main(void) {
             for (int i = 0; i < 4; i++) {
               for (int j = 0; j < 4; j++) {
                 enemies[i][j].collider.x += enemy_move_step;
-                  enemies[i][j].pos.x += enemy_move_step;
+                enemies[i][j].pos.x += enemy_move_step;
               };
             };
             enemy_move_counter -= 1;
@@ -154,7 +154,7 @@ int main(void) {
             for (int i = 0; i < 4; i++) {
               for (int j = 0; j < 4; j++) {
                 enemies[i][j].collider.y += enemy_move_step;
-                  enemies[i][j].pos.y += enemy_move_step;
+                enemies[i][j].pos.y += enemy_move_step;
               };
             };
             enemy_move_counter = 5;
@@ -177,20 +177,7 @@ int main(void) {
       GameDrawPlayerBullet(&player);
 
       // Draw Enemies
-      for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-          if (enemies[i][j].is_alive) {
-            DrawRectangle(enemies[i][j].collider.x,
-                          enemies[i][j].collider.y,
-                          enemies[i][j].collider.width,
-                          enemies[i][j].collider.height, RAYWHITE);
-            DrawTextureEx(
-                enemy_red_txtr,
-                (Vector2){enemies[i][j].pos.x, enemies[i][j].pos.y},
-                0.0f, 1.0f, WHITE);
-          };
-        };
-      };
+      GameDrawEnemies(enemies, &enemy_red_txtr);
       // End of Draw enemies
       //
       // INPUT SECTION
