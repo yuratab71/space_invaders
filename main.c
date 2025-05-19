@@ -21,11 +21,15 @@ enum EnemyMovement { LEFT, RIGHT, DOWN };
 
 PlayerSettings player;
 Rectangle playerArea;
-Enemy enemies[4][4];
+Enemy enemies[6][5];
 GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
+Projectile enemy_projectile;
+float enemy_can_shoot_timer;
+bool enemy_can_shoot;
+Enemy wandering_enemy;
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
@@ -68,8 +72,8 @@ int main(void) {
   int enemy_move_direction = LEFT;
   float enemy_move_step = 40.0f;
   int enemy_start_pos_x = (int)settings.screen_width / 2 - 2 * 80;
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 5; j++) {
       enemies[i][j].collider.x = enemy_start_pos_x + j * 80 + 15.0f;
       enemies[i][j].collider.y = 50 + i * 50 + 10.0f;
       enemies[i][j].pos.x = enemy_start_pos_x + j * 80;
@@ -86,6 +90,26 @@ int main(void) {
       enemies[i][j].is_alive = true;
     };
   };
+
+  wandering_enemy.pos.x = -50.0f;
+  wandering_enemy.pos.y = 50.0f;
+  wandering_enemy.collider.x = wandering_enemy.pos.x;
+  wandering_enemy.collider.y = wandering_enemy.pos.y + 20.0f;
+  wandering_enemy.collider.width = 30;
+  wandering_enemy.collider.height = 30;
+  bool is_wander_enemy = false;
+  float is_wander_enemy_timer = 0.0f;
+
+  enemy_projectile.pos = GameGetRandomEnemyPosition(enemies);
+  enemy_projectile.collider.x = enemy_projectile.pos.x;
+  enemy_projectile.collider.y = enemy_projectile.pos.y;
+  enemy_projectile.collider.width = 15;
+  enemy_projectile.collider.height = 15;
+  enemy_can_shoot = false;
+  enemy_can_shoot_timer = 0.0f;
+
+  Texture2D enemy_projectile_texture = LoadTexture(
+      "./assets/PixelSpaceRage/128px/Plasma_Large_png_processed.png");
 
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
@@ -116,8 +140,48 @@ int main(void) {
       if (!settings.is_paused) {
         GameCalculateBullets(&player, delta);
         GameCalculatePlayer(&player, delta, &settings);
-        for (int i = 0; i < 4; i++) {
-          for (int j = 0; j < 4; j++) {
+
+        if (!is_wander_enemy) {
+          is_wander_enemy_timer += 100.0f * delta;
+        };
+        if (!is_wander_enemy && is_wander_enemy_timer >= 1200.0f) {
+          wandering_enemy.pos.x = -50.0f;
+          is_wander_enemy = true;
+          is_wander_enemy_timer = 0.0f;
+        }
+        if (is_wander_enemy) {
+          if (wandering_enemy.pos.x >= settings.screen_width) {
+            is_wander_enemy = false;
+          };
+          wandering_enemy.pos.x += 100.0f * delta;
+          wandering_enemy.collider.x = wandering_enemy.pos.x + 15.0f;
+        };
+        if (enemy_can_shoot) {
+          enemy_can_shoot_timer += 400.0f * delta;
+        };
+        if (enemy_can_shoot && enemy_can_shoot_timer >= 500.0f) {
+          enemy_projectile.pos = GameGetRandomEnemyPosition(enemies);
+          enemy_projectile.collider.x = enemy_projectile.pos.x - 12.0f;
+          enemy_projectile.collider.y = enemy_projectile.pos.y - 12.0f;
+          enemy_can_shoot = false;
+          enemy_can_shoot_timer = 0.0f;
+        } else {
+          if (enemy_projectile.pos.y > settings.screen_height)
+            enemy_can_shoot = true;
+          enemy_projectile.pos.y += 300.0f * delta;
+          enemy_projectile.collider.y = enemy_projectile.pos.y - 15.0f;
+        };
+        if (CheckCollisionRecs(playerArea, enemy_projectile.collider)) {
+          settings.is_paused = true;
+        };
+        if (CheckCollisionRecs(player.bullet.collider,
+                               wandering_enemy.collider)) {
+          is_wander_enemy = false;
+          is_wander_enemy_timer = 0.0f;
+        };
+
+        for (int i = 0; i < 6; i++) {
+          for (int j = 0; j < 5; j++) {
             GameProcessCollisionBulletOnEnemy(&player, &enemies[i][j]);
           };
         };
@@ -131,8 +195,8 @@ int main(void) {
           }
           switch (enemy_move_direction) {
           case LEFT:
-            for (int i = 0; i < 4; i++) {
-              for (int j = 0; j < 4; j++) {
+            for (int i = 0; i < 6; i++) {
+              for (int j = 0; j < 5; j++) {
                 enemies[i][j].collider.x -= enemy_move_step;
                 enemies[i][j].pos.x -= enemy_move_step;
               };
@@ -141,8 +205,8 @@ int main(void) {
             enemy_move_timer = 120.0f;
             break;
           case RIGHT:
-            for (int i = 0; i < 4; i++) {
-              for (int j = 0; j < 4; j++) {
+            for (int i = 0; i < 6; i++) {
+              for (int j = 0; j < 5; j++) {
                 enemies[i][j].collider.x += enemy_move_step;
                 enemies[i][j].pos.x += enemy_move_step;
               };
@@ -151,8 +215,8 @@ int main(void) {
             enemy_move_timer = 120.0f;
             break;
           case DOWN:
-            for (int i = 0; i < 4; i++) {
-              for (int j = 0; j < 4; j++) {
+            for (int i = 0; i < 6; i++) {
+              for (int j = 0; j < 5; j++) {
                 enemies[i][j].collider.y += enemy_move_step;
                 enemies[i][j].pos.y += enemy_move_step;
               };
@@ -176,6 +240,35 @@ int main(void) {
       GameDrawPlayer(&player, sourceRec, origin);
       GameDrawPlayerBullet(&player);
 
+      DrawText(TextFormat("x = %f", enemy_projectile.pos.x), 800, 100, 20,
+               RAYWHITE);
+      DrawText(TextFormat("y = %f", enemy_projectile.pos.y), 800, 150, 20,
+               RAYWHITE);
+      DrawText(TextFormat("can shoot = %d", enemy_can_shoot), 800, 170, 20,
+               RAYWHITE);
+      DrawText(TextFormat("Timer = %f", enemy_can_shoot_timer), 800, 190, 20,
+               RAYWHITE);
+      DrawText(TextFormat("wander? = %d", is_wander_enemy), 800, 210, 20,
+               RAYWHITE);
+      DrawText(TextFormat("Wander timer = %f", is_wander_enemy_timer), 800, 250,
+               20, RAYWHITE);
+      DrawText(TextFormat("Wx = %f", wandering_enemy.collider.x), 800, 270, 20,
+               RAYWHITE);
+      DrawText(TextFormat("Wy = %f", wandering_enemy.collider.y), 800, 290, 20,
+               RAYWHITE);
+      if (!enemy_can_shoot) {
+        DrawTextureEx(enemy_projectile_texture, enemy_projectile.pos, 180.0f,
+                      1.0f, WHITE);
+        DrawRectangle(enemy_projectile.collider.x, enemy_projectile.collider.y,
+                      enemy_projectile.collider.width,
+                      enemy_projectile.collider.height, RED);
+      };
+      if (is_wander_enemy) {
+        DrawTextureEx(enemy_green_txtr, wandering_enemy.pos, 0.0f, 1.0f, WHITE);
+        DrawRectangle(wandering_enemy.collider.x, wandering_enemy.collider.y,
+                      wandering_enemy.collider.width,
+                      wandering_enemy.collider.height, RAYWHITE);
+      };
       // Draw Enemies
       GameDrawEnemies(enemies, &enemy_red_txtr);
       // End of Draw enemies
@@ -225,6 +318,7 @@ int main(void) {
   UnloadTexture(enemy_red_small_txtr);
   UnloadTexture(enemy_red_txtr);
   UnloadTexture(enemy_teal_txtr);
+  UnloadTexture(enemy_projectile_texture);
   CloseWindow();
   return 0;
 }

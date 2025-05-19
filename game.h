@@ -40,9 +40,10 @@ void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings);
 void GameProcessKeyMovement(int key, PlayerSettings *player);
 void GameProcessShooting(PlayerSettings *player);
 void GameCalculateBullets(PlayerSettings *player, float delta);
+Vector2 GameGetRandomEnemyPosition(Enemy enemies[6][5]);
 void GameCalculatePlayer(PlayerSettings *player, float delta, GlobalSettings *settings);
 void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy);
 void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin);
 void GameDrawPlayerBullet(PlayerSettings *player);
-void GameDrawEnemies(Enemy enemies[4][4], Texture2D *texture);
+void GameDrawEnemies(Enemy enemies[6][5], Texture2D *texture);
 #endif

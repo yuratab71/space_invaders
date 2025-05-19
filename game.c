@@ -1,6 +1,7 @@
 #include "game.h"
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 void GameLoadPlayerTextures(PlayerSettings *player) {
   player->idle = LoadTexture(
@@ -92,6 +93,14 @@ void GameCalculateBullets(PlayerSettings *player, float delta) {
   return;
 };
 
+Vector2 GameGetRandomEnemyPosition(Enemy enemies[6][5]) {
+  int x = rand() % (5 - 0 + 1) + 0;
+  int y = rand() % (4 - 0 + 1) + 0;
+
+  Vector2 result = {enemies[x][y].pos.x, enemies[x][y].pos.y};
+  return result;
+};
+
 void GameCalculatePlayer(PlayerSettings *player, float delta,
                          GlobalSettings *settings) {
   player->position.x += player->acceleration * delta;
@@ -144,9 +153,9 @@ void GameDrawPlayerBullet(PlayerSettings *player) {
   return;
 };
 
-void GameDrawEnemies(Enemy enemies[4][4], Texture2D *texture) {
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
+void GameDrawEnemies(Enemy enemies[6][5], Texture2D *texture) {
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 5; j++) {
       if (enemies[i][j].is_alive) {
         DrawRectangle(enemies[i][j].collider.x, enemies[i][j].collider.y,
                       enemies[i][j].collider.width,
