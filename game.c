@@ -57,9 +57,9 @@ void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings) {
   player->position.width = player->idle.width;
   player->position.height = player->idle.height;
   player->acceleration = 0.0f;
-  player->acceleration_speed = 100.0f;
-  player->decceleration_speed = 120.0f;
-  player->max_acceleration = 270.0f;
+  player->acceleration_speed = (float) PLAYER_ACCELERATION_SPEED;
+  player->decceleration_speed = (float) PLAYER_DECELERATION_SPEED;
+  player->max_acceleration = (float) PLAYER_MAX_ACCELERATION;
   player->score = 0;
   player->can_shoot = true;
   player->bullet.pos.x = player->position.x;

@@ -89,6 +89,9 @@ int main(void) {
         GameCalculateBullets(&player, delta);
         GameCalculatePlayer(&player, delta, &settings);
 
+        e_settings.move_timer -= 60.0f * delta;
+        player.collider.x = player.position.x - 15;
+        
         if (!e_settings.is_wander) {
           e_settings.is_wtimer += 100.0f * delta;
         } else {
@@ -102,7 +105,8 @@ int main(void) {
           wandering_enemy.pos.x = -50.0f;
           e_settings.is_wander = true;
           e_settings.is_wtimer = 0.0f;
-        }
+        };
+
         if (e_settings.can_shoot) {
           e_settings.shoot_timer += 400.0f * delta;
         };
@@ -129,13 +133,11 @@ int main(void) {
           player.score += 300;
         };
 
-        for (int i = 0; i < 6; i++) {
-          for (int j = 0; j < 5; j++) {
+        for (int i = 0; i < enemy_on_x; i++) {
+          for (int j = 0; j < enemy_on_y; j++) {
             GameProcessCollisionBulletOnEnemy(&player, &enemies[i][j]);
           };
         };
-        player.collider.x = player.position.x - 15;
-        e_settings.move_timer -= 60.0f * delta;
         GameProcessEnemyGridMovement(&e_settings, enemy_on_x, enemy_on_y,
                                      enemies);
       };

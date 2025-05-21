@@ -8,6 +8,10 @@
 #define ENEMY_ON_X 7;
 #define ENEMY_ON_Y 7;
 
+#define PLAYER_ACCELERATION_SPEED 100.0f;
+#define PLAYER_DECELERATION_SPEED 120.0f;
+#define PLAYER_MAX_ACCELERATION 270.0f;
+#define PLAYER_BULLET_SPEED 50.0f;
 
 enum EnemyMovement { LEFT, RIGHT, DOWN };
 
@@ -24,7 +28,7 @@ typedef struct {
 } Enemy;
 
 typedef struct {
- Texture2D red;
+  Texture2D red;
   Texture2D green;
   Texture2D teal;
   Texture2D red_small;
