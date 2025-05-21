@@ -5,6 +5,12 @@
 #ifndef GAME_H_
 #define GAME_H_
 
+#define ENEMY_ON_X 7;
+#define ENEMY_ON_Y 7;
+
+
+enum EnemyMovement { LEFT, RIGHT, DOWN };
+
 typedef struct {
   struct Vector2 pos;
   Rectangle collider;
@@ -18,13 +24,22 @@ typedef struct {
 } Enemy;
 
 typedef struct {
+ Texture2D red;
+  Texture2D green;
+  Texture2D teal;
+  Texture2D red_small;
+  Texture2D projectile;
+} EnemyTextures;
+
+typedef struct {
   Rectangle position;
   float acceleration;
   float acceleration_speed;
   float decceleration_speed;
   float max_acceleration;
+  unsigned int score;
   Projectile bullet;
-  int health;
+  Rectangle collider;
   bool can_shoot;
   Texture2D idle;
   Texture2D right_1;
@@ -34,16 +49,45 @@ typedef struct {
   Texture2D projectile;
 } PlayerSettings;
 
+typedef struct {
+  float move_timer;
+  int move_counter;
+  int move_dirprev;
+  int move_dir;
+  float move_step;
+  int start_pos_x;
+
+  bool is_wander;
+  float is_wtimer;
+
+  bool can_shoot;
+  float shoot_timer;
+} EnemiesSettings;
+
 void GameLoadPlayerTextures(PlayerSettings *player);
+void GameLoadEnemyTextures(EnemyTextures *textures);
+void GameUnloadEnemyTextures(EnemyTextures *textures);
 void GameUnloadPlayerTextures(PlayerSettings *player);
 void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings);
+
+void GameInitEnemies(EnemiesSettings *settings, int enemy_x_length,
+                     int enemy_y_len,
+                     Enemy enemies[enemy_x_length][enemy_y_len], Enemy *wenemy,
+                     Projectile *projectile, float start_pos_x);
 void GameProcessKeyMovement(int key, PlayerSettings *player);
+void GameProcessEnemyGridMovement(EnemiesSettings *settings, int enemy_x_length,
+                                  int enemy_y_len,
+                                  Enemy enemies[enemy_x_length][enemy_y_len]);
 void GameProcessShooting(PlayerSettings *player);
 void GameCalculateBullets(PlayerSettings *player, float delta);
-Vector2 GameGetRandomEnemyPosition(Enemy enemies[6][5]);
-void GameCalculatePlayer(PlayerSettings *player, float delta, GlobalSettings *settings);
+Vector2 GameGetRandomEnemyPosition(int enemy_x_length, int enemy_y_len,
+                                   Enemy enemies[enemy_x_length][enemy_y_len]);
+void GameCalculatePlayer(PlayerSettings *player, float delta,
+                         GlobalSettings *settings);
 void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy);
 void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin);
 void GameDrawPlayerBullet(PlayerSettings *player);
-void GameDrawEnemies(Enemy enemies[6][5], Texture2D *texture);
+void GameDrawEnemies(int enemy_x_length, int enemy_y_length,
+                     Enemy enemies[enemy_x_length][enemy_y_length],
+                     Texture2D *texture);
 #endif

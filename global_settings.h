@@ -3,6 +3,10 @@
 #ifndef GLOABAL_SETTINGS_H_
 #define GLOABAL_SETTINGS_H_
 
+#define SCREEN_WIDTH 1028;
+#define SCREEN_HEIGHT 720;
+
+
 enum Modes { MENU, GAME };
 
 typedef struct {

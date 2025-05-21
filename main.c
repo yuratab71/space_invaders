@@ -14,21 +14,20 @@ __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 #ifdef __cplusplus
-}
+
 #endif
 
-enum EnemyMovement { LEFT, RIGHT, DOWN };
+int enemy_on_x;
+int enemy_on_y;
 
 PlayerSettings player;
-Rectangle playerArea;
-Enemy enemies[6][5];
+EnemiesSettings e_settings;
+EnemyTextures e_textures;
 GlobalSettings settings;
 BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
 Projectile enemy_projectile;
-float enemy_can_shoot_timer;
-bool enemy_can_shoot;
 Enemy wandering_enemy;
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
@@ -37,6 +36,9 @@ int main(void) {
   if (NvOptimusEnablement && AmdPowerXpressRequestHighPerformance) {
     printf("[GAME]: Use dedicated GPU enabled \n");
   };
+  enemy_on_x = ENEMY_ON_X;
+  enemy_on_y = ENEMY_ON_Y;
+  Enemy enemies[enemy_on_x][enemy_on_y];
 
   SettingsInit(&settings);
   InitWindow(settings.screen_width, settings.screen_height, title);
@@ -48,68 +50,14 @@ int main(void) {
   GameLoadPlayerTextures(&player);
   GameInitPlayer(&player, &settings);
 
-  playerArea.y = player.position.y - 30;
-  playerArea.x = player.position.x - 15;
-  playerArea.height = player.idle.height;
-  playerArea.width = (float)player.idle.width / 2;
-
   Vector2 origin = {player.idle.width / 2.0f, player.idle.height / 2.0f};
   Rectangle sourceRec = {0, 0, player.idle.width, player.idle.height};
 
-  Texture2D enemy_red_txtr = LoadTexture(
-      "./assets/PixelSpaceRage/128px/Enemy01_Red_Frame_2_png_processed.png");
-  Texture2D enemy_green_txtr = LoadTexture(
-      "./assets/PixelSpaceRage/128px/Enemy01_Green_Frame_1_png_processed.png");
-  Texture2D enemy_teal_txtr = LoadTexture(
-      "./assets/PixelSpaceRage/128px/Enemy01_Teal_Frame_1_png_processed.png");
-  Texture2D enemy_red_small_txtr = LoadTexture(
-      "./assets/PixelSpaceRage/128px/Enemy02Red_Frame_1_png_processed.png");
-
   // Enemy init
-  float enemy_move_timer = 120.0f;
-  int enemy_move_counter = 2;
-  int enemy_move_dir_prev = LEFT;
-  int enemy_move_direction = LEFT;
-  float enemy_move_step = 40.0f;
-  int enemy_start_pos_x = (int)settings.screen_width / 2 - 2 * 80;
-  for (int i = 0; i < 6; i++) {
-    for (int j = 0; j < 5; j++) {
-      enemies[i][j].collider.x = enemy_start_pos_x + j * 80 + 15.0f;
-      enemies[i][j].collider.y = 50 + i * 50 + 10.0f;
-      enemies[i][j].pos.x = enemy_start_pos_x + j * 80;
-      enemies[i][j].pos.y = 50 + i * 50;
-
-      enemies[i][j].collider.width = 35;
-      enemies[i][j].collider.height = 40;
-
-      enemies[i][j].bullet.x = 0;
-      enemies[i][j].bullet.y = 0;
-      enemies[i][j].bullet.height = 20;
-      enemies[i][j].bullet.width = 20;
-
-      enemies[i][j].is_alive = true;
-    };
-  };
-
-  wandering_enemy.pos.x = -50.0f;
-  wandering_enemy.pos.y = 50.0f;
-  wandering_enemy.collider.x = wandering_enemy.pos.x;
-  wandering_enemy.collider.y = wandering_enemy.pos.y + 20.0f;
-  wandering_enemy.collider.width = 30;
-  wandering_enemy.collider.height = 30;
-  bool is_wander_enemy = false;
-  float is_wander_enemy_timer = 0.0f;
-
-  enemy_projectile.pos = GameGetRandomEnemyPosition(enemies);
-  enemy_projectile.collider.x = enemy_projectile.pos.x;
-  enemy_projectile.collider.y = enemy_projectile.pos.y;
-  enemy_projectile.collider.width = 15;
-  enemy_projectile.collider.height = 15;
-  enemy_can_shoot = false;
-  enemy_can_shoot_timer = 0.0f;
-
-  Texture2D enemy_projectile_texture = LoadTexture(
-      "./assets/PixelSpaceRage/128px/Plasma_Large_png_processed.png");
+  GameInitEnemies(&e_settings, enemy_on_x, enemy_on_y, enemies,
+                  &wandering_enemy, &enemy_projectile,
+                  (float)settings.screen_width / 2 - 2 * 80);
+  GameLoadEnemyTextures(&e_textures);
 
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
@@ -141,43 +89,44 @@ int main(void) {
         GameCalculateBullets(&player, delta);
         GameCalculatePlayer(&player, delta, &settings);
 
-        if (!is_wander_enemy) {
-          is_wander_enemy_timer += 100.0f * delta;
-        };
-        if (!is_wander_enemy && is_wander_enemy_timer >= 1200.0f) {
-          wandering_enemy.pos.x = -50.0f;
-          is_wander_enemy = true;
-          is_wander_enemy_timer = 0.0f;
-        }
-        if (is_wander_enemy) {
+        if (!e_settings.is_wander) {
+          e_settings.is_wtimer += 100.0f * delta;
+        } else {
           if (wandering_enemy.pos.x >= settings.screen_width) {
-            is_wander_enemy = false;
+            e_settings.is_wander = false;
           };
           wandering_enemy.pos.x += 100.0f * delta;
           wandering_enemy.collider.x = wandering_enemy.pos.x + 15.0f;
         };
-        if (enemy_can_shoot) {
-          enemy_can_shoot_timer += 400.0f * delta;
+        if (!e_settings.is_wander && e_settings.is_wtimer > 1200.0f) {
+          wandering_enemy.pos.x = -50.0f;
+          e_settings.is_wander = true;
+          e_settings.is_wtimer = 0.0f;
+        }
+        if (e_settings.can_shoot) {
+          e_settings.shoot_timer += 400.0f * delta;
         };
-        if (enemy_can_shoot && enemy_can_shoot_timer >= 500.0f) {
-          enemy_projectile.pos = GameGetRandomEnemyPosition(enemies);
+        if (e_settings.can_shoot && e_settings.shoot_timer >= 500.0f) {
+          enemy_projectile.pos =
+              GameGetRandomEnemyPosition(enemy_on_x, enemy_on_y, enemies);
           enemy_projectile.collider.x = enemy_projectile.pos.x - 12.0f;
           enemy_projectile.collider.y = enemy_projectile.pos.y - 12.0f;
-          enemy_can_shoot = false;
-          enemy_can_shoot_timer = 0.0f;
+          e_settings.can_shoot = false;
+          e_settings.shoot_timer = 0.0f;
         } else {
           if (enemy_projectile.pos.y > settings.screen_height)
-            enemy_can_shoot = true;
+            e_settings.can_shoot = true;
           enemy_projectile.pos.y += 300.0f * delta;
           enemy_projectile.collider.y = enemy_projectile.pos.y - 15.0f;
         };
-        if (CheckCollisionRecs(playerArea, enemy_projectile.collider)) {
-          settings.is_paused = true;
+        if (CheckCollisionRecs(player.collider, enemy_projectile.collider)) {
+          //          settings.is_paused = true;
         };
         if (CheckCollisionRecs(player.bullet.collider,
                                wandering_enemy.collider)) {
-          is_wander_enemy = false;
-          is_wander_enemy_timer = 0.0f;
+          e_settings.is_wander = false;
+          e_settings.is_wtimer = 0.0f;
+          player.score += 300;
         };
 
         for (int i = 0; i < 6; i++) {
@@ -185,58 +134,15 @@ int main(void) {
             GameProcessCollisionBulletOnEnemy(&player, &enemies[i][j]);
           };
         };
-        playerArea.x = player.position.x - 15;
-        enemy_move_timer -= 1.0f;
-        if (enemy_move_timer < 1.0f) {
-          if (enemy_move_counter == 0 &&
-              (enemy_move_direction == LEFT || enemy_move_direction == RIGHT)) {
-            enemy_move_dir_prev = enemy_move_direction;
-            enemy_move_direction = DOWN;
-          }
-          switch (enemy_move_direction) {
-          case LEFT:
-            for (int i = 0; i < 6; i++) {
-              for (int j = 0; j < 5; j++) {
-                enemies[i][j].collider.x -= enemy_move_step;
-                enemies[i][j].pos.x -= enemy_move_step;
-              };
-            };
-            enemy_move_counter -= 1;
-            enemy_move_timer = 120.0f;
-            break;
-          case RIGHT:
-            for (int i = 0; i < 6; i++) {
-              for (int j = 0; j < 5; j++) {
-                enemies[i][j].collider.x += enemy_move_step;
-                enemies[i][j].pos.x += enemy_move_step;
-              };
-            };
-            enemy_move_counter -= 1;
-            enemy_move_timer = 120.0f;
-            break;
-          case DOWN:
-            for (int i = 0; i < 6; i++) {
-              for (int j = 0; j < 5; j++) {
-                enemies[i][j].collider.y += enemy_move_step;
-                enemies[i][j].pos.y += enemy_move_step;
-              };
-            };
-            enemy_move_counter = 5;
-            if (enemy_move_dir_prev == LEFT)
-              enemy_move_direction = RIGHT;
-            if (enemy_move_dir_prev == RIGHT)
-              enemy_move_direction = LEFT;
-            enemy_move_timer = 120.0f;
-            break;
-          default:
-            break;
-          };
-        };
+        player.collider.x = player.position.x - 15;
+        e_settings.move_timer -= 60.0f * delta;
+        GameProcessEnemyGridMovement(&e_settings, enemy_on_x, enemy_on_y,
+                                     enemies);
       };
       // DRAWING SECTION
       //
-      DrawRectangle(playerArea.x, playerArea.y, playerArea.width,
-                    playerArea.height, GREEN);
+      DrawRectangle(player.collider.x, player.collider.y, player.collider.width,
+                    player.collider.height, GREEN);
       GameDrawPlayer(&player, sourceRec, origin);
       GameDrawPlayerBullet(&player);
 
@@ -244,35 +150,41 @@ int main(void) {
                RAYWHITE);
       DrawText(TextFormat("y = %f", enemy_projectile.pos.y), 800, 150, 20,
                RAYWHITE);
-      DrawText(TextFormat("can shoot = %d", enemy_can_shoot), 800, 170, 20,
+      DrawText(TextFormat("can shoot = %d", e_settings.can_shoot), 800, 170, 20,
                RAYWHITE);
-      DrawText(TextFormat("Timer = %f", enemy_can_shoot_timer), 800, 190, 20,
+      DrawText(TextFormat("Timer = %f", e_settings.shoot_timer), 800, 190, 20,
                RAYWHITE);
-      DrawText(TextFormat("wander? = %d", is_wander_enemy), 800, 210, 20,
+      DrawText(TextFormat("wander? = %d", e_settings.is_wander), 800, 210, 20,
                RAYWHITE);
-      DrawText(TextFormat("Wander timer = %f", is_wander_enemy_timer), 800, 250,
+      DrawText(TextFormat("Wander timer = %f", e_settings.is_wtimer), 800, 250,
                20, RAYWHITE);
       DrawText(TextFormat("Wx = %f", wandering_enemy.collider.x), 800, 270, 20,
                RAYWHITE);
       DrawText(TextFormat("Wy = %f", wandering_enemy.collider.y), 800, 290, 20,
                RAYWHITE);
-      if (!enemy_can_shoot) {
-        DrawTextureEx(enemy_projectile_texture, enemy_projectile.pos, 180.0f,
-                      1.0f, WHITE);
+      DrawText(TextFormat("Dir = %d", e_settings.move_dir), 800, 310, 20,
+               RAYWHITE);
+      DrawText(TextFormat("Count = %d", e_settings.move_counter), 800, 330, 20,
+               RAYWHITE);
+      DrawText(TextFormat("Move timer = %f", e_settings.move_timer), 800, 350,
+               20, RAYWHITE);
+
+      DrawText(TextFormat("%d", player.score), 50, 50, 30, RAYWHITE);
+      if (!e_settings.can_shoot) {
+        DrawTextureEx(e_textures.projectile, enemy_projectile.pos, 180.0f, 1.0f,
+                      WHITE);
         DrawRectangle(enemy_projectile.collider.x, enemy_projectile.collider.y,
                       enemy_projectile.collider.width,
                       enemy_projectile.collider.height, RED);
       };
-      if (is_wander_enemy) {
-        DrawTextureEx(enemy_green_txtr, wandering_enemy.pos, 0.0f, 1.0f, WHITE);
+      if (e_settings.is_wander) {
+        DrawTextureEx(e_textures.green, wandering_enemy.pos, 0.0f, 1.0f, WHITE);
         DrawRectangle(wandering_enemy.collider.x, wandering_enemy.collider.y,
                       wandering_enemy.collider.width,
                       wandering_enemy.collider.height, RAYWHITE);
       };
-      // Draw Enemies
-      GameDrawEnemies(enemies, &enemy_red_txtr);
-      // End of Draw enemies
-      //
+      GameDrawEnemies(enemy_on_x, enemy_on_y, enemies, &e_textures.red);
+
       // INPUT SECTION
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MENU;
@@ -314,11 +226,7 @@ int main(void) {
   };
   BackgroundUnloadTexture(&background);
   GameUnloadPlayerTextures(&player);
-  UnloadTexture(enemy_green_txtr);
-  UnloadTexture(enemy_red_small_txtr);
-  UnloadTexture(enemy_red_txtr);
-  UnloadTexture(enemy_teal_txtr);
-  UnloadTexture(enemy_projectile_texture);
+  GameUnloadEnemyTextures(&e_textures);
   CloseWindow();
   return 0;
-}
+};
