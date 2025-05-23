@@ -1,17 +1,18 @@
+#include <stdbool.h>
+
 #include "global_settings.h"
 #include "raylib.h"
-#include <stdbool.h>
 
 #ifndef GAME_H_
 #define GAME_H_
 
-#define ENEMY_ON_X 7; // TODO need to switch it in code, now the x is y in for enemies
-#define ENEMY_ON_Y 8; 
+#define ENEMY_ON_X \
+  7;  // TODO need to switch it in code, now the x is y in for enemies
+#define ENEMY_ON_Y 8;
 #define ENEMY_MOVE_TIME 60.0f;
 #define WENEMY_TIME 100.0f;
 #define WENEMY_TIME_MAX 1200.0f;
 #define WENEMY_MOVE 100.0f;
-
 
 #define PLAYER_ACCELERATION_SPEED 100.0f;
 #define PLAYER_DECELERATION_SPEED 120.0f;
