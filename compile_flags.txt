@@ -1,2 +1,4 @@
 -I./raylib/include
 -L./raylib/lib
+-std=c99
+

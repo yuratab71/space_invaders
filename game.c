@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <time.h>
 
 void GameLoadPlayerTextures(PlayerSettings *player) {
   player->idle = LoadTexture(
@@ -44,7 +45,7 @@ void GameUnloadPlayerTextures(PlayerSettings *player) {
 };
 
 void GameUnloadEnemyTextures(EnemyTextures *textures) {
-  UnloadTexture( textures->red);
+  UnloadTexture(textures->red);
   UnloadTexture(textures->green);
   UnloadTexture(textures->teal);
   UnloadTexture(textures->red_small);
@@ -57,9 +58,9 @@ void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings) {
   player->position.width = player->idle.width;
   player->position.height = player->idle.height;
   player->acceleration = 0.0f;
-  player->acceleration_speed = (float) PLAYER_ACCELERATION_SPEED;
-  player->decceleration_speed = (float) PLAYER_DECELERATION_SPEED;
-  player->max_acceleration = (float) PLAYER_MAX_ACCELERATION;
+  player->acceleration_speed = (float)PLAYER_ACCELERATION_SPEED;
+  player->decceleration_speed = (float)PLAYER_DECELERATION_SPEED;
+  player->max_acceleration = (float)PLAYER_MAX_ACCELERATION;
   player->score = 0;
   player->can_shoot = true;
   player->bullet.pos.x = player->position.x;
@@ -72,6 +73,12 @@ void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings) {
   player->collider.y = player->position.y - 30.0f;
   player->collider.width = (float)player->idle.width / 2;
   player->collider.height = player->idle.height;
+  player->origin.x = player->idle.width / 2.0f;
+  player->origin.y = player->idle.height / 2.0f;
+  player->source_rec.x = 0;
+  player->source_rec.y = 0;
+  player->source_rec.width = player->idle.width;
+  player->source_rec.x = player->idle.height;
 };
 
 void GameInitEnemies(EnemiesSettings *settings, int enemy_x_length,
@@ -79,14 +86,14 @@ void GameInitEnemies(EnemiesSettings *settings, int enemy_x_length,
                      Enemy enemies[enemy_x_length][enemy_y_len], Enemy *wenemy,
                      Projectile *projectile, float start_pos_x) {
   settings->move_timer = 120.0f;
-  settings->move_counter = 2;
+  settings->move_counter = (int)enemy_y_len / 2;
   settings->move_dir = LEFT;
   settings->move_dirprev = LEFT;
   settings->move_step = 40.0f;
   settings->start_pos_x = start_pos_x;
   settings->is_wander = false;
   settings->is_wtimer = 0.0f;
-  settings->can_shoot = false;
+  settings->can_shoot = true;
   settings->shoot_timer = 0.0f;
 
   for (int i = 0; i < enemy_x_length; i++) {
@@ -109,15 +116,15 @@ void GameInitEnemies(EnemiesSettings *settings, int enemy_x_length,
   };
   wenemy->pos.x = -50.0f;
   wenemy->pos.y = 40.0f;
-  wenemy->collider.x = wenemy->pos.x;
+  wenemy->collider.x = wenemy->pos.x - 5.0f;
   wenemy->collider.y = wenemy->pos.y;
   wenemy->collider.width = 30;
   wenemy->collider.height = 30;
 
   projectile->pos =
       GameGetRandomEnemyPosition(enemy_x_length, enemy_y_len, enemies);
-  projectile->collider.x = projectile->pos.x;
-  projectile->collider.y = projectile->pos.y;
+  projectile->collider.x = projectile->pos.x - 12.0f;
+  projectile->collider.y = projectile->pos.y - 12.0f;
   projectile->collider.width = 15;
   projectile->collider.height = 15;
 };
@@ -219,8 +226,24 @@ void GameCalculateBullets(PlayerSettings *player, float delta) {
 Vector2
 GameGetRandomEnemyPosition(int enemy_x_length, int enemy_y_length,
                            Enemy enemies[enemy_x_length][enemy_y_length]) {
-  int x = rand() % (enemy_x_length - 1 - 0 + 1) + 0;
-  int y = rand() % (enemy_y_length - 1 - 0 + 1) + 0;
+ 
+  int valid_indecies[enemy_x_length * enemy_y_length][2];
+  int count = 0;
+
+  for (int i = 0; i < enemy_x_length; i++) {
+    for (int j = 0; j < enemy_y_length; j++) {
+    if (enemies[i][j].is_alive) {
+        valid_indecies[count][0] = i;
+        valid_indecies[count][1] = j;
+        count++;
+      };
+
+    };
+  };
+  srand(time(NULL));
+  int random_index = rand() % count;
+  int x = valid_indecies[random_index][0]; 
+  int y = valid_indecies[random_index][1];
 
   Vector2 result = {enemies[x][y].pos.x, enemies[x][y].pos.y};
   return result;
@@ -233,6 +256,7 @@ void GameCalculatePlayer(PlayerSettings *player, float delta,
     player->position.x = settings->screen_width;
   if (player->position.x > settings->screen_width)
     player->position.x = 0;
+  player->collider.x = player->position.x - 15.0f;
   return;
 };
 
@@ -247,28 +271,27 @@ void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy) {
   };
 };
 
-void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin) {
+void GameDrawPlayer(PlayerSettings *player) {
   if (player->acceleration > 70.0f) {
-    DrawTexturePro(player->right_2, source, player->position, origin, 0.0f,
-                   WHITE);
+    DrawTexture(player->right_1, player->collider.x - 15.0f, player->collider.y, WHITE);
     return;
   };
   if (player->acceleration > 30.0f) {
-    DrawTexturePro(player->right_1, source, player->position, origin, 0.0f,
+    DrawTexture(player->right_1, player->collider.x - 15.0f, player->collider.y,
                    WHITE);
     return;
   };
   if (player->acceleration < -70.0f) {
-    DrawTexturePro(player->left_2, source, player->position, origin, 0.0f,
+    DrawTexture(player->left_2, player->collider.x - 15.0f, player->collider.y,
                    WHITE);
     return;
   };
   if (player->acceleration < -30.0f) {
-    DrawTexturePro(player->left_1, source, player->position, origin, 0.0f,
+    DrawTexture(player->left_1, player->collider.x - 15.0f, player->collider.y,
                    WHITE);
     return;
   };
-  DrawTexturePro(player->idle, source, player->position, origin, 0.0f, WHITE);
+  DrawTexture(player->idle,  player->collider.x - 15.0f, player->collider.y, WHITE);
   return;
 };
 
@@ -295,3 +318,10 @@ void GameDrawEnemies(int enemy_x_axis, int enemy_y_axis,
     };
   };
 };
+
+void GameDrawWEnemy(Enemy *wenemy, Texture2D *texture) {
+  DrawTextureEx(*texture, wenemy->pos, 0.0f, 1.0f, WHITE);
+  DrawRectangleRec(wenemy->collider, RAYWHITE);
+};
+
+void GameDrawEnemyProjectiles() {};

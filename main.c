@@ -1,10 +1,11 @@
+#include <stdbool.h>
+#include <stdio.h>
+
 #include "background.h"
 #include "game.h"
 #include "global_settings.h"
 #include "main_menu.h"
 #include "raylib.h"
-#include <stdbool.h>
-#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +29,7 @@ BackgroundSettings background;
 MenuSettings menu;
 Btn buttons[2];
 Projectile enemy_projectile;
-Enemy wandering_enemy;
+Enemy wenemy;
 char title[] = "Space Invaders";
 char main_menu_title[] = "Hello, Space Invaders";
 
@@ -50,59 +51,52 @@ int main(void) {
   GameLoadPlayerTextures(&player);
   GameInitPlayer(&player, &settings);
 
-  Vector2 origin = {player.idle.width / 2.0f, player.idle.height / 2.0f};
-  Rectangle sourceRec = {0, 0, player.idle.width, player.idle.height};
-
   // Enemy init
-  GameInitEnemies(&e_settings, enemy_on_x, enemy_on_y, enemies,
-                  &wandering_enemy, &enemy_projectile,
-                  (float)settings.screen_width / 2 - 2 * 80);
+  GameInitEnemies(
+      &e_settings, enemy_on_x, enemy_on_y, enemies, &wenemy, &enemy_projectile,
+      (float)settings.screen_width / 2 - ((float)enemy_on_x / 2) * 80);
   GameLoadEnemyTextures(&e_textures);
 
   while (!settings.should_close && !WindowShouldClose()) {
     float delta = GetFrameTime();
 
-    if (!settings.is_paused)
-      BackgrounfCalculatePosition(&background);
+    if (!settings.is_paused) BackgrounfCalculatePosition(&background);
 
     BeginDrawing();
+
     ClearBackground(BLACK);
     BackgroundDrawSelf(&background);
+
     // MAIN MENU
     if (settings.mode == MENU) {
       MenuDrawTitle(&menu);
       MenuDrawButtons(&menu, buttons);
-      if (IsKeyPressed(KEY_DOWN))
-        MenuProcessKey(KEY_DOWN, &menu, &settings);
-      if (IsKeyPressed(KEY_UP))
-        MenuProcessKey(KEY_UP, &menu, &settings);
-      if (IsKeyPressed(KEY_ENTER))
-        MenuProcessKey(KEY_ENTER, &menu, &settings);
+      if (IsKeyPressed(KEY_DOWN)) MenuProcessKey(KEY_DOWN, &menu, &settings);
+      if (IsKeyPressed(KEY_UP)) MenuProcessKey(KEY_UP, &menu, &settings);
+      if (IsKeyPressed(KEY_ENTER)) MenuProcessKey(KEY_ENTER, &menu, &settings);
     };
     // END OF MAIN MENU
 
     // ACTUAL GAME
     if (settings.mode == GAME) {
-      if (settings.is_paused)
-        DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
+      if (settings.is_paused) DrawText("|| PAUSE", 300, 60, 15, RAYWHITE);
       if (!settings.is_paused) {
         GameCalculateBullets(&player, delta);
         GameCalculatePlayer(&player, delta, &settings);
 
-        e_settings.move_timer -= 60.0f * delta;
-        player.collider.x = player.position.x - 15;
-        
+        e_settings.move_timer -= delta * ENEMY_MOVE_TIME;
+
         if (!e_settings.is_wander) {
-          e_settings.is_wtimer += 100.0f * delta;
+          e_settings.is_wtimer += delta * WENEMY_TIME;
         } else {
-          if (wandering_enemy.pos.x >= settings.screen_width) {
+          if (wenemy.pos.x >= settings.screen_width) {
             e_settings.is_wander = false;
           };
-          wandering_enemy.pos.x += 100.0f * delta;
-          wandering_enemy.collider.x = wandering_enemy.pos.x + 15.0f;
+          wenemy.pos.x += delta * WENEMY_MOVE;
+          wenemy.collider.x = wenemy.pos.x + 15.0f;
         };
-        if (!e_settings.is_wander && e_settings.is_wtimer > 1200.0f) {
-          wandering_enemy.pos.x = -50.0f;
+        if (!e_settings.is_wander && (e_settings.is_wtimer > 1200.0f)) {
+          wenemy.pos.x = -50.0f;
           e_settings.is_wander = true;
           e_settings.is_wtimer = 0.0f;
         };
@@ -126,8 +120,7 @@ int main(void) {
         if (CheckCollisionRecs(player.collider, enemy_projectile.collider)) {
           //          settings.is_paused = true;
         };
-        if (CheckCollisionRecs(player.bullet.collider,
-                               wandering_enemy.collider)) {
+        if (CheckCollisionRecs(player.bullet.collider, wenemy.collider)) {
           e_settings.is_wander = false;
           e_settings.is_wtimer = 0.0f;
           player.score += 300;
@@ -143,9 +136,8 @@ int main(void) {
       };
       // DRAWING SECTION
       //
-      DrawRectangle(player.collider.x, player.collider.y, player.collider.width,
-                    player.collider.height, GREEN);
-      GameDrawPlayer(&player, sourceRec, origin);
+      DrawRectangleRec(player.collider, GREEN);
+      GameDrawPlayer(&player);
       GameDrawPlayerBullet(&player);
 
       DrawText(TextFormat("x = %f", enemy_projectile.pos.x), 800, 100, 20,
@@ -160,9 +152,9 @@ int main(void) {
                RAYWHITE);
       DrawText(TextFormat("Wander timer = %f", e_settings.is_wtimer), 800, 250,
                20, RAYWHITE);
-      DrawText(TextFormat("Wx = %f", wandering_enemy.collider.x), 800, 270, 20,
+      DrawText(TextFormat("Wx = %f", wenemy.collider.x), 800, 270, 20,
                RAYWHITE);
-      DrawText(TextFormat("Wy = %f", wandering_enemy.collider.y), 800, 290, 20,
+      DrawText(TextFormat("Wy = %f", wenemy.collider.y), 800, 290, 20,
                RAYWHITE);
       DrawText(TextFormat("Dir = %d", e_settings.move_dir), 800, 310, 20,
                RAYWHITE);
@@ -170,7 +162,8 @@ int main(void) {
                RAYWHITE);
       DrawText(TextFormat("Move timer = %f", e_settings.move_timer), 800, 350,
                20, RAYWHITE);
-
+      DrawText(TextFormat("Ex = %d, Ey = %d", enemy_on_x, enemy_on_y), 800, 370,
+               30, RAYWHITE);
       DrawText(TextFormat("%d", player.score), 50, 50, 30, RAYWHITE);
       if (!e_settings.can_shoot) {
         DrawTextureEx(e_textures.projectile, enemy_projectile.pos, 180.0f, 1.0f,
@@ -179,17 +172,17 @@ int main(void) {
                       enemy_projectile.collider.width,
                       enemy_projectile.collider.height, RED);
       };
-      if (e_settings.is_wander) {
-        DrawTextureEx(e_textures.green, wandering_enemy.pos, 0.0f, 1.0f, WHITE);
-        DrawRectangle(wandering_enemy.collider.x, wandering_enemy.collider.y,
-                      wandering_enemy.collider.width,
-                      wandering_enemy.collider.height, RAYWHITE);
-      };
+      if (e_settings.is_wander) GameDrawWEnemy(&wenemy, &e_textures.red_small);
       GameDrawEnemies(enemy_on_x, enemy_on_y, enemies, &e_textures.red);
 
       // INPUT SECTION
       if (IsKeyReleased(KEY_BACKSPACE)) {
         settings.mode = MENU;
+        GameInitPlayer(&player, &settings);
+        GameInitEnemies(
+            &e_settings, enemy_on_x, enemy_on_y, enemies, &wenemy,
+            &enemy_projectile,
+            (float)settings.screen_width / 2 - ((float)enemy_on_x / 2) * 80);
       };
 
       if (IsKeyPressed(KEY_SPACE) && !settings.is_paused && player.can_shoot) {
@@ -200,7 +193,7 @@ int main(void) {
         GameProcessKeyMovement(KEY_LEFT, &player);
       } else {
         if (player.acceleration < 0.0f && !settings.is_paused) {
-          if (player.acceleration > -0.5f) {
+          if (player.acceleration > -2.5f) {
             player.acceleration = 0.0f;
           } else {
             player.acceleration += player.decceleration_speed * delta;
@@ -211,15 +204,14 @@ int main(void) {
         GameProcessKeyMovement(KEY_RIGHT, &player);
       } else {
         if (player.acceleration > 0.0f && !settings.is_paused) {
-          if (player.acceleration < 0.5f) {
+          if (player.acceleration < 2.5f) {
             player.acceleration = 0.0f;
           } else {
             player.acceleration -= player.decceleration_speed * delta;
           };
         };
       };
-      if (IsKeyPressed(KEY_P))
-        settings.is_paused = !settings.is_paused;
+      if (IsKeyPressed(KEY_P)) settings.is_paused = !settings.is_paused;
     };
     // INPUT END
     //

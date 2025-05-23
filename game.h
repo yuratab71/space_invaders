@@ -5,8 +5,13 @@
 #ifndef GAME_H_
 #define GAME_H_
 
-#define ENEMY_ON_X 7;
-#define ENEMY_ON_Y 7;
+#define ENEMY_ON_X 7; // TODO need to switch it in code, now the x is y in for enemies
+#define ENEMY_ON_Y 8; 
+#define ENEMY_MOVE_TIME 60.0f;
+#define WENEMY_TIME 100.0f;
+#define WENEMY_TIME_MAX 1200.0f;
+#define WENEMY_MOVE 100.0f;
+
 
 #define PLAYER_ACCELERATION_SPEED 100.0f;
 #define PLAYER_DECELERATION_SPEED 120.0f;
@@ -51,6 +56,8 @@ typedef struct {
   Texture2D left_1;
   Texture2D left_2;
   Texture2D projectile;
+  Vector2 origin;
+  Rectangle source_rec;
 } PlayerSettings;
 
 typedef struct {
@@ -89,9 +96,10 @@ Vector2 GameGetRandomEnemyPosition(int enemy_x_length, int enemy_y_len,
 void GameCalculatePlayer(PlayerSettings *player, float delta,
                          GlobalSettings *settings);
 void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy);
-void GameDrawPlayer(PlayerSettings *player, Rectangle source, Vector2 origin);
+void GameDrawPlayer(PlayerSettings *player);
 void GameDrawPlayerBullet(PlayerSettings *player);
 void GameDrawEnemies(int enemy_x_length, int enemy_y_length,
                      Enemy enemies[enemy_x_length][enemy_y_length],
                      Texture2D *texture);
+void GameDrawWEnemy(Enemy *wenemy, Texture2D *texture);
 #endif
