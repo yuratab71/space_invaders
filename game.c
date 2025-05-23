@@ -300,7 +300,8 @@ GameCalculatePlayer (PlayerSettings *player, float delta,
 };
 
 void
-GameProcessCollisionBulletOnEnemy (PlayerSettings *player, Enemy *enemy)
+GameProcessCollisionBulletOnEnemy (PlayerSettings *player, Enemy *enemy,
+                                   AudioPlayer *audio)
 {
   if (enemy->is_alive
       && CheckCollisionRecs (player->bullet.collider, enemy->collider))
@@ -310,6 +311,7 @@ GameProcessCollisionBulletOnEnemy (PlayerSettings *player, Enemy *enemy)
       player->can_shoot = true;
       enemy->is_alive = false;
       player->score += 50;
+      AudioPlayerPlayExplosion (audio);
     };
 };
 

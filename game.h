@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include "global_settings.h"
+#include "audio_player.h"
 #include "raylib.h"
 
 #ifndef GAME_H_
@@ -96,7 +97,7 @@ Vector2 GameGetRandomEnemyPosition(int enemy_x_length, int enemy_y_len,
                                    Enemy enemies[enemy_x_length][enemy_y_len]);
 void GameCalculatePlayer(PlayerSettings *player, float delta,
                          GlobalSettings *settings);
-void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy);
+void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy, AudioPlayer *audio);
 void GameDrawPlayer(PlayerSettings *player);
 void GameDrawPlayerBullet(PlayerSettings *player);
 void GameDrawEnemies(int enemy_x_length, int enemy_y_length,

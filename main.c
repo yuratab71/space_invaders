@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "audio_player.h"
 #include "background.h"
 #include "game.h"
 #include "global_settings.h"
@@ -27,6 +28,7 @@ extern "C"
   EnemyTextures e_textures;
   GlobalSettings settings;
   BackgroundSettings background;
+  AudioPlayer audio;
   MenuSettings menu;
   Btn buttons[2];
   Projectile enemy_projectile;
@@ -47,6 +49,10 @@ extern "C"
 
     SettingsInit (&settings);
     InitWindow (settings.screen_width, settings.screen_height, title);
+    InitAudioDevice ();
+    AudioPlayerLoadAssets (&audio);
+    PlayMusicStream (audio.main_theme);
+    float mt_time_played = 0.0f;
     SetWindowState (FLAG_VSYNC_HINT);
     BackgroundLoadTexture (&background);
     BackgroundInit (&background, &settings);
@@ -66,9 +72,16 @@ extern "C"
       {
         float delta = GetFrameTime ();
 
-        if (!settings.is_paused)
-          BackgrounfCalculatePosition (&background);
+        UpdateMusicStream (audio.main_theme);
 
+        if (!settings.is_paused)
+          {
+            BackgrounfCalculatePosition (&background);
+          };
+        mt_time_played = GetMusicTimePlayed (audio.main_theme)
+                         / GetMusicTimeLength (audio.main_theme);
+        if (mt_time_played > 1.0f)
+          mt_time_played = 0.0f;
         BeginDrawing ();
 
         ClearBackground (BLACK);
@@ -154,14 +167,15 @@ extern "C"
                     e_settings.is_wander = false;
                     e_settings.is_wtimer = 0.0f;
                     player.score += 300;
+                    AudioPlayerPlayExplosion (&audio);
                   };
 
                 for (int i = 0; i < enemy_on_x; i++)
                   {
                     for (int j = 0; j < enemy_on_y; j++)
                       {
-                        GameProcessCollisionBulletOnEnemy (&player,
-                                                           &enemies[i][j]);
+                        GameProcessCollisionBulletOnEnemy (
+                            &player, &enemies[i][j], &audio);
                       };
                   };
                 GameProcessEnemyGridMovement (&e_settings, enemy_on_x,
@@ -277,6 +291,8 @@ extern "C"
     BackgroundUnloadTexture (&background);
     GameUnloadPlayerTextures (&player);
     GameUnloadEnemyTextures (&e_textures);
+    AudioPlayerUnloadAssets (&audio);
+    CloseAudioDevice ();
     CloseWindow ();
     return 0;
   };
