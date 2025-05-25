@@ -7,7 +7,7 @@
 #define SCREEN_HEIGHT 720;
 
 
-enum Modes { MENU, GAME };
+enum Modes { MENU, GAME , GAME_OVER };
 
 typedef struct {
   int screen_width;

@@ -102,7 +102,7 @@ GameInitEnemies (EnemiesSettings *settings, int enemy_x_length,
   settings->move_counter = (int)enemy_y_len / 2;
   settings->move_dir = LEFT;
   settings->move_dirprev = LEFT;
-  settings->move_step = 40.0f;
+  settings->move_step = ENEMY_STEP;
   settings->start_pos_x = start_pos_x;
   settings->is_wander = false;
   settings->is_wtimer = 0.0f;
@@ -251,7 +251,7 @@ GameCalculateBullets (PlayerSettings *player, float delta)
     };
   if (player->bullet.pos.y < player->position.y)
     {
-      player->bullet.pos.y -= 450.0f * delta;
+      player->bullet.pos.y -= delta * PLAYER_BULLET_SPEED;
     };
 
   player->bullet.collider.y = player->bullet.pos.y;
@@ -299,7 +299,7 @@ GameCalculatePlayer (PlayerSettings *player, float delta,
   return;
 };
 
-void
+bool
 GameProcessCollisionBulletOnEnemy (PlayerSettings *player, Enemy *enemy,
                                    AudioPlayer *audio)
 {
@@ -312,7 +312,10 @@ GameProcessCollisionBulletOnEnemy (PlayerSettings *player, Enemy *enemy,
       enemy->is_alive = false;
       player->score += 50;
       AudioPlayerPlayExplosion (audio);
+
+      return true;
     };
+  return false;
 };
 
 void
@@ -368,10 +371,6 @@ GameDrawEnemies (int enemy_x_axis, int enemy_y_axis,
         {
           if (enemies[i][j].is_alive)
             {
-              DrawRectangle (enemies[i][j].collider.x,
-                             enemies[i][j].collider.y,
-                             enemies[i][j].collider.width,
-                             enemies[i][j].collider.height, RAYWHITE);
               DrawTextureEx (
                   *texture,
                   (Vector2){ enemies[i][j].pos.x, enemies[i][j].pos.y }, 0.0f,
@@ -385,7 +384,40 @@ void
 GameDrawWEnemy (Enemy *wenemy, Texture2D *texture)
 {
   DrawTextureEx (*texture, wenemy->pos, 0.0f, 1.0f, WHITE);
-  DrawRectangleRec (wenemy->collider, RAYWHITE);
 };
 
-void GameDrawEnemyProjectiles () {};
+void
+GameLoadExplosionTextures (ExplosionTextures *textures)
+{
+  textures->exp_1 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_01_png_processed.png");
+  textures->exp_2 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_02_png_processed.png");
+  textures->exp_3 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_03_png_processed.png");
+  textures->exp_4 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_04_png_processed.png");
+  textures->exp_5 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_05_png_processed.png");
+  textures->exp_6 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_06_png_processed.png");
+  textures->exp_7 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_07_png_processed.png");
+  textures->exp_8 = LoadTexture (
+      "./assets/PixelSpaceRage/128px/Explosion01_Frame_08_png_processed.png");
+};
+
+void
+GameUnloadExplosionTextures (ExplosionTextures *textures)
+{
+  UnloadTexture (textures->exp_1);
+  UnloadTexture (textures->exp_2);
+  UnloadTexture (textures->exp_3);
+  UnloadTexture (textures->exp_4);
+  UnloadTexture (textures->exp_5);
+  UnloadTexture (textures->exp_6);
+  UnloadTexture (textures->exp_7);
+  UnloadTexture (textures->exp_8);
+};
+
+void GameDrawExplosion () {};

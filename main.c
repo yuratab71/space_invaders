@@ -34,6 +34,7 @@ extern "C"
   GlobalSettings settings;
   BackgroundSettings background;
   AudioPlayer audio;
+  ExplosionTextures exp_textures;
   MenuSettings menu;
   Btn buttons[2];
   Projectile enemy_projectile;
@@ -51,7 +52,24 @@ extern "C"
     enemy_on_x = ENEMY_ON_X;
     enemy_on_y = ENEMY_ON_Y;
     Enemy enemies[enemy_on_x][enemy_on_y];
+    int animation_counter = 0;
 
+    AnimationManager animations[4] = { {
+                                           .timer = 0.0f,
+                                       },
+                                       {
+                                           .timer = 0.0f,
+                                       },
+                                       {
+
+                                           .timer = 0.0f,
+                                       },
+                                       {
+
+                                           .timer = 0.0f,
+                                       }
+
+    };
     objects_on_map = 3;
     objects_in_block = 3;
     DestroybleObject des_objects[objects_on_map][objects_in_block];
@@ -68,6 +86,8 @@ extern "C"
     MenuInitButtons (buttons, &settings, &menu);
     GameLoadPlayerTextures (&player);
     GameInitPlayer (&player, &settings);
+
+    GameLoadExplosionTextures (&exp_textures);
 
     // Enemy init
     GameInitEnemies (&e_settings, enemy_on_x, enemy_on_y, enemies, &wenemy,
@@ -115,7 +135,8 @@ extern "C"
         if (settings.mode == GAME)
           {
             if (settings.is_paused)
-              DrawText ("|| PAUSE", 300, 60, 15, RAYWHITE);
+              DrawText ("|| PAUSE", settings.screen_width - 180, 50, 20,
+                        RAYWHITE);
             if (!settings.is_paused)
               {
                 GameCalculateBullets (&player, delta);
@@ -169,21 +190,57 @@ extern "C"
                 if (CheckCollisionRecs (player.collider,
                                         enemy_projectile.collider))
                   {
-                    //          settings.is_paused = true;
+                    settings.is_paused = true;
+                    GameInitPlayer (&player, &settings);
+                    GameInitEnemies (&e_settings, enemy_on_x, enemy_on_y,
+                                     enemies, &wenemy, &enemy_projectile,
+                                     (float)settings.screen_width / 2
+                                         - ((float)enemy_on_x / 2) * 80);
+                    ObjectsInit (objects_on_map, objects_in_block,
+                                 des_objects);
                   };
+                for (int i = 0; i < 4; i++)
+                  {
+
+                    if (animations[i].timer < 1.0f)
+                      {
+                        animations[i].timer = 0.0f;
+                      }
+                    else
+                      {
+                        animations[i].timer -= 1000.0f * delta;
+                      };
+                  };
+                DrawText (TextFormat ("Counter = %d", animation_counter), 720,
+                          160, 20, RAYWHITE);
                 for (int i = 0; i < objects_on_map; i++)
                   {
                     for (int j = 0; j < objects_in_block; j++)
                       {
-                        if (des_objects[i][j].health != 0
-                            && !e_settings.can_shoot)
+                        if (des_objects[i][j].health != 0)
+                          if (!player.can_shoot)
+                            {
+                              if (CheckCollisionRecs (
+                                      player.bullet.collider,
+                                      des_objects[i][j].collider))
+                                {
+                                  des_objects[i][j].health -= 1;
+                                  player.bullet.pos.x = player.position.x;
+                                  player.bullet.pos.y = player.position.y;
+                                  player.can_shoot = true;
+                                };
+                            };
+                        if (!e_settings.can_shoot && des_objects[i][j].health)
                           {
-                            if (CheckCollisionRecs (des_objects[i][j].collider,
-                                                    enemy_projectile.collider))
-                              {
-                                des_objects[i][j].health -= 1;
-                                e_settings.can_shoot = true;
-                              };
+                            {
+                              if (CheckCollisionRecs (
+                                      des_objects[i][j].collider,
+                                      enemy_projectile.collider))
+                                {
+                                  des_objects[i][j].health -= 1;
+                                  e_settings.can_shoot = true;
+                                };
+                            };
                           };
                       };
                   };
@@ -200,8 +257,24 @@ extern "C"
                   {
                     for (int j = 0; j < enemy_on_y; j++)
                       {
-                        GameProcessCollisionBulletOnEnemy (
-                            &player, &enemies[i][j], &audio);
+                        if (GameProcessCollisionBulletOnEnemy (
+                                &player, &enemies[i][j], &audio))
+                          {
+                            printf ("Hit\n");
+                            animations[animation_counter].timer = 1200.0f;
+                            animations[animation_counter].pos
+                                = enemies[i][j].pos;
+                            if (animation_counter == 3)
+                              {
+                                animation_counter = 0;
+                              }
+                            else
+                              {
+                                animation_counter += 1;
+                              }
+                            printf ("Timer is %f\n",
+                                    animations[animation_counter].timer);
+                          };
                       };
                   };
                 GameProcessEnemyGridMovement (&e_settings, enemy_on_x,
@@ -209,66 +282,71 @@ extern "C"
               };
             // DRAWING SECTION
             //
-            DrawRectangleRec (player.collider, GREEN);
+            for (int i = 0; i < 4; i++)
+              {
+                if (animations[i].timer > 1150.0f)
+                  {
+                    DrawTexture (exp_textures.exp_1, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 1000.0f)
+                  {
+                    DrawTexture (exp_textures.exp_2, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 850.0f)
+                  {
+                    DrawTexture (exp_textures.exp_3, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 600.0f)
+                  {
+                    DrawTexture (exp_textures.exp_4, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 450.0f)
+                  {
+                    DrawTexture (exp_textures.exp_5, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 300.0f)
+                  {
+                    DrawTexture (exp_textures.exp_1, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 1150.0f)
+                  {
+                    DrawTexture (exp_textures.exp_1, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                else if (animations[i].timer > 1150.0f)
+                  {
+                    DrawTexture (exp_textures.exp_1, animations[i].pos.x,
+                                 animations[i].pos.y, WHITE);
+                  }
+                DrawText (TextFormat ("Animation timer no. %d = %f", i + 1,
+                                      animations[i].timer),
+                          720, 50 + i * 30, 20, RAYWHITE);
+              };
+            DrawText (TextFormat ("SCORE %d", player.score), 50, 50, 20,
+                      RAYWHITE);
             GameDrawPlayer (&player);
             GameDrawPlayerBullet (&player);
 
-            DrawText (TextFormat ("x = %f", enemy_projectile.pos.x), 800, 100,
-                      20, RAYWHITE);
-            DrawText (TextFormat ("y = %f", enemy_projectile.pos.y), 800, 150,
-                      20, RAYWHITE);
-            DrawText (TextFormat ("can shoot = %d", e_settings.can_shoot), 800,
-                      170, 20, RAYWHITE);
-            DrawText (TextFormat ("Timer = %f", e_settings.shoot_timer), 800,
-                      190, 20, RAYWHITE);
-            DrawText (TextFormat ("wander? = %d", e_settings.is_wander), 800,
-                      210, 20, RAYWHITE);
-            DrawText (TextFormat ("Wander timer = %f", e_settings.is_wtimer),
-                      800, 250, 20, RAYWHITE);
-            DrawText (TextFormat ("Wx = %f", wenemy.collider.x), 800, 270, 20,
-                      RAYWHITE);
-            DrawText (TextFormat ("Wy = %f", wenemy.collider.y), 800, 290, 20,
-                      RAYWHITE);
-            DrawText (TextFormat ("Dir = %d", e_settings.move_dir), 800, 310,
-                      20, RAYWHITE);
-            DrawText (TextFormat ("Count = %d", e_settings.move_counter), 800,
-                      330, 20, RAYWHITE);
-            DrawText (TextFormat ("Move timer = %f", e_settings.move_timer),
-                      800, 350, 20, RAYWHITE);
-            DrawText (TextFormat ("Ex = %d, Ey = %d", enemy_on_x, enemy_on_y),
-                      800, 370, 30, RAYWHITE);
-            DrawText (TextFormat ("%d", player.score), 50, 50, 30, RAYWHITE);
             if (!e_settings.can_shoot)
               {
                 DrawTextureEx (e_textures.projectile, enemy_projectile.pos,
                                180.0f, 1.0f, WHITE);
-                DrawRectangle (enemy_projectile.collider.x,
-                               enemy_projectile.collider.y,
-                               enemy_projectile.collider.width,
-                               enemy_projectile.collider.height, RED);
               };
             if (e_settings.is_wander)
               {
                 GameDrawWEnemy (&wenemy, &e_textures.red_small);
               };
-            // GameDrawEnemies (objects_on_map, objects_in_block, enemies,
-            //               &e_textures.red);
-            //        DrawRectangle (7 * 32, 510, 32, 32,
-            //        BROWN);
-            //       DrawRectangle (16 * 32, 510, 32, 32,
-            //       BROWN);
-            //      DrawRectangle (24 * 32, 510, 32, 32,
-            //      BROWN);
-            int pos = 1;
+            GameDrawEnemies (enemy_on_x, enemy_on_y, enemies, &e_textures.red);
             for (int i = 0; i < 3; i++)
               {
                 for (int j = 0; j < 3; j++)
                   {
-                    DrawText (TextFormat ("I=%d, J=%d, X=%f, Y=%f", i, j,
-                                          des_objects[i][j].collider.x,
-                                          des_objects[i][j].collider.y),
-                              100, pos * 20, 15, RAYWHITE);
-                    pos++;
                     if (des_objects[i][j].health != 0)
                       {
                         DrawTexture (
@@ -288,6 +366,7 @@ extern "C"
                                  &wenemy, &enemy_projectile,
                                  (float)settings.screen_width / 2
                                      - ((float)enemy_on_x / 2) * 80);
+                ObjectsInit (objects_on_map, objects_in_block, des_objects);
               };
 
             if (IsKeyPressed (KEY_SPACE) && !settings.is_paused
@@ -346,6 +425,7 @@ extern "C"
     GameUnloadPlayerTextures (&player);
     GameUnloadEnemyTextures (&e_textures);
     ObjectsUnloadTextures (&obj_textures);
+    GameUnloadExplosionTextures (&exp_textures);
     AudioPlayerUnloadAssets (&audio);
     CloseAudioDevice ();
     CloseWindow ();

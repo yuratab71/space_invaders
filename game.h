@@ -14,11 +14,12 @@
 #define WENEMY_TIME 100.0f;
 #define WENEMY_TIME_MAX 1200.0f;
 #define WENEMY_MOVE 100.0f;
+#define ENEMY_STEP 15.0f;
 
 #define PLAYER_ACCELERATION_SPEED 100.0f;
 #define PLAYER_DECELERATION_SPEED 120.0f;
 #define PLAYER_MAX_ACCELERATION 270.0f;
-#define PLAYER_BULLET_SPEED 50.0f;
+#define PLAYER_BULLET_SPEED 750.0f;
 
 enum EnemyMovement { LEFT, RIGHT, DOWN };
 
@@ -26,6 +27,11 @@ typedef struct {
   struct Vector2 pos;
   Rectangle collider;
 } Projectile;
+
+typedef struct {
+  float timer;
+  Vector2 pos;
+} AnimationManager;
 
 typedef struct {
   Rectangle collider;
@@ -77,10 +83,23 @@ typedef struct {
   float shoot_timer;
 } EnemiesSettings;
 
+typedef struct {
+  Texture2D exp_1;
+  Texture2D exp_2;
+  Texture2D exp_3;
+  Texture2D exp_4;
+  Texture2D exp_5;
+  Texture2D exp_6;
+  Texture2D exp_7;
+  Texture2D exp_8;
+} ExplosionTextures;
+
 void GameLoadPlayerTextures(PlayerSettings *player);
 void GameLoadEnemyTextures(EnemyTextures *textures);
+void GameLoadExplosionTextures(ExplosionTextures *textures);
 void GameUnloadEnemyTextures(EnemyTextures *textures);
 void GameUnloadPlayerTextures(PlayerSettings *player);
+void GameUnloadExplosionTextures(ExplosionTextures *textures);
 void GameInitPlayer(PlayerSettings *player, GlobalSettings *settings);
 
 void GameInitEnemies(EnemiesSettings *settings, int enemy_x_length,
@@ -97,7 +116,7 @@ Vector2 GameGetRandomEnemyPosition(int enemy_x_length, int enemy_y_len,
                                    Enemy enemies[enemy_x_length][enemy_y_len]);
 void GameCalculatePlayer(PlayerSettings *player, float delta,
                          GlobalSettings *settings);
-void GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy, AudioPlayer *audio);
+bool GameProcessCollisionBulletOnEnemy(PlayerSettings *player, Enemy *enemy, AudioPlayer *audio);
 void GameDrawPlayer(PlayerSettings *player);
 void GameDrawPlayerBullet(PlayerSettings *player);
 void GameDrawEnemies(int enemy_x_length, int enemy_y_length,
