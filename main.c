@@ -6,6 +6,7 @@
 #include "game.h"
 #include "global_settings.h"
 #include "main_menu.h"
+#include "objects.h"
 #include "raylib.h"
 
 #ifdef __cplusplus
@@ -23,9 +24,13 @@ extern "C"
   int enemy_on_x;
   int enemy_on_y;
 
+  int objects_on_map;
+  int objects_in_block;
+
   PlayerSettings player;
   EnemiesSettings e_settings;
   EnemyTextures e_textures;
+  ObjectTextures obj_textures;
   GlobalSettings settings;
   BackgroundSettings background;
   AudioPlayer audio;
@@ -47,6 +52,9 @@ extern "C"
     enemy_on_y = ENEMY_ON_Y;
     Enemy enemies[enemy_on_x][enemy_on_y];
 
+    objects_on_map = 3;
+    objects_in_block = 3;
+    DestroybleObject des_objects[objects_on_map][objects_in_block];
     SettingsInit (&settings);
     InitWindow (settings.screen_width, settings.screen_height, title);
     InitAudioDevice ();
@@ -67,6 +75,8 @@ extern "C"
                      (float)settings.screen_width / 2
                          - ((float)enemy_on_x / 2) * 80);
     GameLoadEnemyTextures (&e_textures);
+    ObjectsLoadTextures (&obj_textures);
+    ObjectsInit (objects_on_map, objects_in_block, des_objects);
 
     while (!settings.should_close && !WindowShouldClose ())
       {
@@ -161,6 +171,22 @@ extern "C"
                   {
                     //          settings.is_paused = true;
                   };
+                for (int i = 0; i < objects_on_map; i++)
+                  {
+                    for (int j = 0; j < objects_in_block; j++)
+                      {
+                        if (des_objects[i][j].health != 0
+                            && !e_settings.can_shoot)
+                          {
+                            if (CheckCollisionRecs (des_objects[i][j].collider,
+                                                    enemy_projectile.collider))
+                              {
+                                des_objects[i][j].health -= 1;
+                                e_settings.can_shoot = true;
+                              };
+                          };
+                      };
+                  };
                 if (CheckCollisionRecs (player.bullet.collider,
                                         wenemy.collider))
                   {
@@ -222,9 +248,37 @@ extern "C"
                                enemy_projectile.collider.height, RED);
               };
             if (e_settings.is_wander)
-              GameDrawWEnemy (&wenemy, &e_textures.red_small);
-            GameDrawEnemies (enemy_on_x, enemy_on_y, enemies, &e_textures.red);
-
+              {
+                GameDrawWEnemy (&wenemy, &e_textures.red_small);
+              };
+            // GameDrawEnemies (objects_on_map, objects_in_block, enemies,
+            //               &e_textures.red);
+            //        DrawRectangle (7 * 32, 510, 32, 32,
+            //        BROWN);
+            //       DrawRectangle (16 * 32, 510, 32, 32,
+            //       BROWN);
+            //      DrawRectangle (24 * 32, 510, 32, 32,
+            //      BROWN);
+            int pos = 1;
+            for (int i = 0; i < 3; i++)
+              {
+                for (int j = 0; j < 3; j++)
+                  {
+                    DrawText (TextFormat ("I=%d, J=%d, X=%f, Y=%f", i, j,
+                                          des_objects[i][j].collider.x,
+                                          des_objects[i][j].collider.y),
+                              100, pos * 20, 15, RAYWHITE);
+                    pos++;
+                    if (des_objects[i][j].health != 0)
+                      {
+                        DrawTexture (
+                            GetTextureByHealth (des_objects[i][j].health,
+                                                &obj_textures),
+                            des_objects[i][j].collider.x,
+                            des_objects[i][j].collider.y, WHITE);
+                      };
+                  };
+              };
             // INPUT SECTION
             if (IsKeyReleased (KEY_BACKSPACE))
               {
@@ -291,6 +345,7 @@ extern "C"
     BackgroundUnloadTexture (&background);
     GameUnloadPlayerTextures (&player);
     GameUnloadEnemyTextures (&e_textures);
+    ObjectsUnloadTextures (&obj_textures);
     AudioPlayerUnloadAssets (&audio);
     CloseAudioDevice ();
     CloseWindow ();
