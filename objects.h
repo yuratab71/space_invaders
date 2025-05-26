@@ -3,6 +3,9 @@
 #ifndef OBJECTS_H_
 #define OBJECTS_H_
 
+#define OBJECTS_ON_MAP 3;
+#define OBJECTS_IN_BLOCK 3;
+
 typedef struct {
   Rectangle collider; //texture would be 32x32
   int health; // from 4 to 1, 0 is death;

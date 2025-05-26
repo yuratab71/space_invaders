@@ -1,103 +1,90 @@
 #include "main_menu.h"
 #include "raylib.h"
 
-void
-MenuInit (MenuSettings *menu, GlobalSettings *settings)
+void MenuInit(MenuSettings *menu, GlobalSettings *settings)
 {
-  menu->title_fz = 30;
-  menu->title_text = "Hello, Space Invaders";
-  menu->btn_fsz = 20;
-  menu->title_pos_x = MenuCalculateXPos (
-      menu->title_text, settings->screen_width, menu->btn_fsz);
-  menu->title_pos_y = 400;
-  menu->position_step_y = 8;
-  menu->focus = 0;
+    menu->title_fz = 30;
+    menu->title_text = "Hello, Space Invaders";
+    menu->btn_fsz = 20;
+    menu->title_pos_x = MenuCalculateXPos(menu->title_text, settings->screen_width, menu->btn_fsz);
+    menu->title_pos_y = 400;
+    menu->position_step_y = 8;
+    menu->focus = 0;
 
-  return;
+    return;
 };
 
-void
-MenuInitButtons (Btn btn[], GlobalSettings *settings, MenuSettings *menu)
+void MenuInitButtons(Btn btn[], GlobalSettings *settings, MenuSettings *menu)
 {
-  int btn_size = 2;
-  for (int i = 0; i < btn_size; i++)
+    int btn_size = 2;
+    for (int i = 0; i < btn_size; i++)
     {
-      btn[i].text = (i == 0 ? "Start" : "Exit");
-      btn[i].step = menu->position_step_y + i + 1;
-      btn[i].x_pos = MenuCalculateXPos (btn[i].text, settings->screen_width,
-                                        menu->btn_fsz);
-      btn[i].y_pos
-          = MenuCalculateYPos (settings->screen_height, menu->position_step_y);
-      btn[i].y_pos = 500;
-      btn[i].is_focused = !i;
+        btn[i].text = (i == 0 ? "Start" : "Exit");
+        btn[i].step = menu->position_step_y + i + 1;
+        btn[i].x_pos = MenuCalculateXPos(btn[i].text, settings->screen_width, menu->btn_fsz);
+        btn[i].y_pos = MenuCalculateYPos(settings->screen_height, menu->position_step_y);
+        btn[i].y_pos = 500;
+        btn[i].is_focused = !i;
     };
 };
 
-int
-MenuCalculateXPos (char text[], int s_width, int fsz)
+int MenuCalculateXPos(char text[], int s_width, int fsz)
 {
-  return (int)(s_width - MeasureText (text, fsz)) / 2;
+    return (int)(s_width - MeasureText(text, fsz)) / 2;
 };
 
-int
-MenuCalculateYPos (int s_height, int step)
+int MenuCalculateYPos(int s_height, int step)
 {
-  return (int)s_height / 16 * step;
+    return (int)s_height / 16 * step;
 };
 
-void
-MenuDrawTitle (MenuSettings *menu)
+void MenuDrawTitle(MenuSettings *menu)
 {
-  DrawText (menu->title_text, menu->title_pos_x, menu->title_pos_y,
-            menu->title_fz, RAYWHITE);
-  return;
+    DrawText(menu->title_text, menu->title_pos_x, menu->title_pos_y, menu->title_fz, RAYWHITE);
+    return;
 };
 
-void
-MenuDrawButtons (MenuSettings *menu, Btn btn[])
+void MenuDrawButtons(MenuSettings *menu, Btn btn[])
 {
-  DrawText (btn[0].text, btn[0].x_pos, btn[0].y_pos, menu->btn_fsz,
-            menu->focus == 0 ? ORANGE : RAYWHITE);
-  DrawText (btn[1].text, btn[1].x_pos, btn[1].y_pos + 30, menu->btn_fsz,
-            menu->focus != 0 ? ORANGE : RAYWHITE);
-  return;
+    DrawText(btn[0].text, btn[0].x_pos, btn[0].y_pos, menu->btn_fsz, menu->focus == 0 ? ORANGE : RAYWHITE);
+    DrawText(btn[1].text, btn[1].x_pos, btn[1].y_pos + 30, menu->btn_fsz, menu->focus != 0 ? ORANGE : RAYWHITE);
+    return;
 };
 
-void
-MenuProcessKey (int key, MenuSettings *menu, GlobalSettings *stn)
+void MenuProcessKey(int key, MenuSettings *menu, GlobalSettings *stn)
 {
-  switch (key)
+    switch (key)
     {
     case KEY_DOWN:
-      if (menu->focus == 1)
+        if (menu->focus == 1)
         {
-          menu->focus = 0;
-          break;
+            menu->focus = 0;
+            break;
         };
-      menu->focus += 1;
-      break;
+        menu->focus += 1;
+        break;
     case KEY_UP:
-      if (menu->focus == 0)
+        if (menu->focus == 0)
         {
-          menu->focus = 1;
-          break;
+            menu->focus = 1;
+            break;
         }
-      menu->focus -= 1;
-      break;
+        menu->focus -= 1;
+        break;
     case KEY_ENTER:
-      if (menu->focus == 1)
+        if (menu->focus == 1)
         {
-          stn->should_close = true;
-          break;
+            stn->should_close = true;
+            break;
         };
-      if (menu->focus == 0)
+        if (menu->focus == 0)
         {
-          stn->mode = GAME;
-          break;
+            stn->mode = GAME;
+            break;
         };
-      break;
+        break;
     default:
-      break;
+        break;
     };
-  return;
+    return;
 };

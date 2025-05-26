@@ -7,8 +7,7 @@
 #ifndef GAME_H_
 #define GAME_H_
 
-#define ENEMY_ON_X \
-  7;  // TODO need to switch it in code, now the x is y in for enemies
+#define ENEMY_ON_X 7;  // TODO need to switch it in code, now the x is y in for enemies
 #define ENEMY_ON_Y 8;
 #define ENEMY_MOVE_TIME 60.0f;
 #define WENEMY_TIME 100.0f;
