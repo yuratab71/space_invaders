@@ -125,7 +125,9 @@ extern "C"
 
             mt_time_played = GetMusicTimePlayed(audio.main_theme) / GetMusicTimeLength(audio.main_theme);
             if (mt_time_played > 1.0f)
+            {
                 mt_time_played = 0.0f;
+            }
 
             BeginDrawing();
 
@@ -265,6 +267,7 @@ extern "C"
                                 animations[animation_counter].timer = 1200.0f;
                                 animations[animation_counter].pos = enemies[i][j].pos;
                                 if (animation_counter == 3)
+
                                 {
                                     animation_counter = 0;
                                 }
@@ -402,6 +405,8 @@ extern "C"
             // END OF ACTUAL GAME
             EndDrawing();
         };
+
+        // Unload all resources
         BackgroundUnloadTexture(&background);
         GameUnloadPlayerTextures(&player);
         GameUnloadEnemyTextures(&e_textures);

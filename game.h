@@ -35,7 +35,6 @@ typedef struct {
 typedef struct {
   Rectangle collider;
   Vector2 pos;
-  Rectangle bullet;
   bool is_alive;
 } Enemy;
 
