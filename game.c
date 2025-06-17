@@ -104,11 +104,6 @@ void GameInitEnemies(EnemiesSettings *settings, int enemy_x_length, int enemy_y_
             enemies[i][j].collider.width = 35;
             enemies[i][j].collider.height = 40;
 
-            enemies[i][j].bullet.x = 0;
-            enemies[i][j].bullet.y = 0;
-            enemies[i][j].bullet.height = 20;
-            enemies[i][j].bullet.width = 20;
-
             enemies[i][j].is_alive = true;
         };
     };
